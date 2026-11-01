@@ -19,6 +19,11 @@
       "Bash(git branch --show-current)",
       "Bash(gh issue view:*)"
     ],
+    "ask": [
+      "Bash(gh issue create:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr comment:*)"
+    ],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",

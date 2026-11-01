@@ -17,4 +17,5 @@
 ## settings.json 권한 설계 이유
 
 - `allow`에는 읽기·조회성 명령과 컴파일·테스트 명령만 둔다. `git add`·`git commit`·`git switch`·`git push`·`gh pr create`는 **허용 목록에 넣지 않는다** — 실행마다 권한 확인이 떠서, 고정 지점의 사용자 확인 뒤에도 한 번 더 거른다(Bash가 있는 test-writer에 대한 2차 방어).
+- `ask`에는 외부에 보이는 `gh issue create`·`gh pr create`·`gh pr comment`를 둔다. 실행마다 사람이 확인한다.
 - `deny`에는 비밀값 읽기, force push, main·develop push, `gh pr merge`, `rm -rf`를 둔다. GitHub 브랜치 보호가 같은 것을 서버에서 한 번 더 막는다.
