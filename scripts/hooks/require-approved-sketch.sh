@@ -23,5 +23,5 @@ done
 [ -z "$statuses" ] && exit 0
 case "$statuses" in *승인됨*|*완료*) exit 0 ;; esac
 
-echo "차단: 이슈 #$issue의 sketch가 아직 승인되지 않았다(status:$statuses). 승인 전에는 src/main을 고치지 않는다. start 라우트에서 사용자 승인을 받은 뒤 status를 승인됨으로 바꾸고 다시 시도한다." >&2
+echo "차단: 이슈 #${issue}의 sketch가 아직 승인되지 않았다(status:$statuses). 승인 전에는 src/main을 고치지 않는다. start 라우트에서 사용자 승인을 받은 뒤 status를 승인됨으로 바꾸고 다시 시도한다." >&2
 exit 2
