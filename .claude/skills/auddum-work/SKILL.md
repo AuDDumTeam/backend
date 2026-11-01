@@ -1,6 +1,6 @@
 ---
 name: auddum-work
-description: "AuDDum 백엔드 작업 하나를 sketch 기준으로 처음부터 끝까지 진행하는 라우터. 다음 할 일 고르기(/next), 이슈 시작과 sketch 작성·승인(/start), 테스트 먼저와 구현·검증·리뷰(/build), 정본 갱신과 교훈·sketch 마무리(/wrap), Draft PR(/pr), PR 코멘트 처리(/revise)를 맡는다. '다음 뭐 해', '#12 시작하자', '구현해줘', '마무리하자', 'PR 만들어줘', '리뷰 반영해줘', 'what's next', 'start issue', 'open a PR'. 개념 질문, 오타·한 줄 수정, PR 머지·배포는 맡지 않는다."
+description: "AuDDum 백엔드 작업 하나를 sketch 기준으로 처음부터 끝까지 진행하는 라우터. 다음 할 일 고르기(/next), 이슈 시작과 sketch 작성·승인(/start), 테스트 먼저와 구현·검증·리뷰(/build), 정본 갱신과 교훈·sketch 마무리(/wrap), PR 올리기(/pr), PR 코멘트 처리(/revise)를 맡는다. '다음 뭐 해', '#12 시작하자', '구현해줘', '마무리하자', 'PR 만들어줘', '리뷰 반영해줘', 'what's next', 'start issue', 'open a PR'. 개념 질문, 오타·한 줄 수정, PR 머지·배포는 맡지 않는다."
 disable-model-invocation: true
 ---
 
@@ -23,7 +23,7 @@ disable-model-invocation: true
 | 작은 일(동작·규칙이 안 바뀜) | small | `references/small.md` | #131 |
 | 테스트·구현·검증·리뷰 | build | `references/build.md` | #132 |
 | 정본 갱신, 교훈, sketch 마무리 | wrap | `references/wrap.md` | #133 |
-| Draft PR을 연다 | pr | `references/pr.md` | #133 |
+| PR을 연다 | pr | `references/pr.md` | #133 |
 | PR 코멘트를 처리한다 | revise | `references/revise.md` | #134 |
 
 small은 전용 커맨드가 없다. `/start`가 크기를 구분해 작은 일이면 small로 넘긴다.
