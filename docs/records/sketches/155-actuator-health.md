@@ -4,7 +4,7 @@ sources: [이슈 #155, product/로드맵.md, howto/로컬-환경.md, howto/배�
 features: [없음]
 ids: []
 decisions: []
-status: 승인됨
+status: 완료
 ---
 
 # /actuator/health가 응답하도록 설정하고 테스트한다
@@ -79,4 +79,18 @@ status: 승인됨
 
 ## 결과
 
-(구현 뒤 채운다.)
+공통 `application.yaml`에 `management.*`를 명시해 웹에 여는 Actuator를 `health` 하나로 고정하고, 응답을 `status` 하나로 만들었다(상세 숨김, probes 끔). 테스트 `ActuatorHealthTest`(5개)가 200과 `UP`, 키가 `status` 하나뿐인 것, `env`·`info`·`prometheus`의 404를 확인한다. 로드맵 M1 완료 기준과 로컬 환경·배포 문서를 맞췄다.
+
+계획과 달라진 점:
+
+- 테스트 리소스의 `application.yaml`이 메인을 가려서 메인의 `management.*`를 테스트가 읽지 못했다. 사용자 결정(질문 6)으로 테스트 yaml에도 같은 설정을 복제했다.
+- 기본 응답에 `groups`가 함께 나와 `probes.enabled=false`를 더했다(질문 7).
+- 리뷰 반영으로 테스트를 `MockMvc`에서 주변 코드와 같은 `MockMvcTester`로 바꾸고, 중복 단언을 없앴다.
+- 설정 위치를 "공통 `application.yaml`"로 정했으나 테스트용 복제가 추가됐다.
+
+한계와 후속:
+
+- 테스트 yaml이 메인을 복제한 것이라 한쪽만 고치면 어긋나도 테스트가 통과한다. #23에서 노출 범위를 넓힐 때 두 yaml을 동기화하는 테스트(메인 yaml을 파일로 읽어 비교)를 도입할지 본다.
+- DB가 끊기면 503 `DOWN`이 되는지는 H2로 확인하지 못했다. 배포 환경(#21)에서 확인한다(로드맵 #21 항목에 옮겨 적었다).
+- `/actuator/prometheus` 404 확인은 지금 지표 의존성이 없어서 `include`를 넓혀도 404일 수 있다. #23에서 의존성이 들어올 때 다시 본다.
+- 실제 시험 중 찾은 하네스 개선점은 #131~#136의 시험 정리에서 따로 다룬다.

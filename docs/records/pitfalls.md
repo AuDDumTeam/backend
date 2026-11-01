@@ -12,3 +12,10 @@
 - 상황: `branches/<branch>/protection/required_status_checks`를 PATCH했더니 "Required status checks not enabled"로 404가 났다. 브랜치에 필수 체크가 한 번도 켜진 적이 없을 때다.
 - 대응: 보호 설정 전체를 PUT으로 올린다. 기존 값(승인 인원, 관리자 적용, force push·삭제 금지)을 먼저 읽어 같은 값으로 함께 보낸다. PUT은 빠뜨린 항목을 끈다.
 - 관련: #126
+
+## 테스트 리소스의 application.yaml이 메인 설정을 가린다
+
+- 상황: `src/test/resources/application.yaml`이 메인과 이름이 같아서 테스트에서는 메인 `application.yaml`이 읽히지 않는다. 메인에만 `management.*` 같은 설정을 넣으면 테스트는 그 설정과 무관하게 Spring 기본값으로 통과해서, 설정을 지워도 테스트가 깨지지 않는다.
+- 대응: 설정을 검증하는 테스트는 설정이 테스트 yaml에도 있는지 확인하고, 일부러 값을 뒤집었을 때(환경 변수 등) 실패하는지 본다. 두 파일에 같은 설정을 두면 한쪽만 고쳐도 통과하는 한계가 있으니 복제한 이유와 동기화 책임을 주석으로 남긴다.
+- 관련: #155
+
