@@ -24,7 +24,7 @@
 
 ## 테스트 방법
 
-<!-- 실행한 명령과 확인한 동작. 예: `./gradlew build`, `scripts/docs-check` 통과 -->
+<!-- 실행한 명령과 확인한 동작. 예: `./gradlew build` 통과 -->
 
 ## 한계·후속
 
@@ -34,5 +34,5 @@
 
 - [ ] 사용자에게 보이는 동작이 바뀌면 기능 페이지 등 관련 문서를 이 PR에서 고쳤다.
 - [ ] sketch의 `status`가 `완료`다(작은 일은 해당 없음).
-- [ ] `./gradlew build`와 `scripts/docs-check`가 통과한다.
+- [ ] `./gradlew build`가 통과한다.
 - [ ] 비밀 값(`.env`, 키)을 커밋하지 않았다.

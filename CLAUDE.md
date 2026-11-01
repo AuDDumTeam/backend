@@ -46,7 +46,6 @@
 - 브랜치는 git flow(`feature/{이슈번호}-{요약}` ← `develop` ← `main`), release 브랜치는 없다. `main`·`develop`에 직접 커밋하지 않는다.
 - 테스트 메서드 이름은 한글이고 `@DisplayName`은 쓰지 않는다.
 - 빌드·테스트: `./gradlew build`, `./gradlew test`
-- 문서 ID 검사: `scripts/docs-check` (테스트는 `scripts/test-docs-check`)
 
 ## 구성
 
@@ -61,6 +60,8 @@
 실행 모드는 서브에이전트 모드로 고정되어 있다 (`.claude/settings.json`에서 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`).
 
 ## 변경 이력
+
+- 2026-11-01 — 문서 검사 도구 `DocsCheck`(`scripts/docs-check`)와 CI의 문서 검사 단계를 지웠다. CI가 막은 적이 없고 개편이 끝나 유지 이점이 작다고 판단했다. 생성 문서는 `./gradlew build`가 계속 비교한다. 필요하면 git 기록에서 되살린다. 이에 따라 #128(CI 문서 관문)을 닫고 #136의 커밋 전 docs-check hook 항목을 뺀다.
 
 - 2026-10-22 — 이슈 #72. 정책·컨벤션 인터뷰 결과를 반영했다. 구현 주체는 이슈마다 확인 ①에서 정한다. 위험도에 변경 성격 축(구조 변경은 보통 이상)을 더했다. 두 리뷰어는 읽기 전용으로 바꾸고(Write 제거) 리포트는 오케스트레이터가 저장한다. 재리뷰는 동작·검증이 바뀐 경우에만 한다. 큰 이슈는 마지막 PR만 `Closes`로 나눈다. 정본 규칙은 `docs/howto/개발-워크플로.md`, `docs/engineering/컨벤션.md`, `docs/engineering/설계-결정.md`에 있다.
 

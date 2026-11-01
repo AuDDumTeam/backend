@@ -8,4 +8,4 @@
 | [API 목록](API-목록.md) | `openapi.json`과 기능 페이지의 "사용하는 API" | `DOCS_UPDATE=1 ./gradlew test --tests '*OpenApiDocTest'` |
 | [openapi.json](openapi.json) | 컨트롤러와 스웨거 어노테이션(`/v3/api-docs`) | `DOCS_UPDATE=1 ./gradlew test --tests '*OpenApiDocTest'` |
 
-`openapi.json`은 API 문서를 만드는 도구(스웨거 뷰어, 타입 생성, 목 서버)에 그대로 넣는 파일이다. 기능 페이지의 "사용하는 API"와 `docs-check`가 서로 대조한다.
+`openapi.json`은 API 문서를 만드는 도구(스웨거 뷰어, 타입 생성, 목 서버)에 그대로 넣는 파일이다. 기능 페이지의 "사용하는 API"는 이 파일과 맞춘다.
