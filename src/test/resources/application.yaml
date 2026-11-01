@@ -43,6 +43,7 @@ auddum:
     secret: test-only-anon-cookie-secret-test-only-0123456789
 
 management:
+  # 메인 application.yaml의 management와 같게 유지한다. 테스트 리소스가 메인을 가려서 복제했다(sketch 155 질문 6).
   # 웹에 여는 Actuator 엔드포인트는 health 하나다. 지표 노출은 모니터링 작업(#23)이 넓힌다.
   endpoints:
     web:
