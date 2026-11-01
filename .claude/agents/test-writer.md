@@ -27,12 +27,13 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 - 정본과 sketch가 기대 동작을 말하지 않는 부분은 테스트를 쓰지 않고 `## 쓰지 않은 테스트와 이유`·`## 사용자 질문`에 남긴다. 추측으로 메우지 않는다.
 - 기준으로 실패하면 테스트를 그대로 두고 bug-report에 적는다. 기대값을 바꾸거나 `@Disabled`를 붙이지 않는다.
 - Bash는 `./gradlew compileTestJava`와 `./gradlew test --tests <대상>` 실행에만 쓴다.
+- 테스트 지원 클래스(`IntegrationTestSupport`, `WebApiTestSupport`, `UnitTestSupport` 등)는 레포에 있는 것을 상속한다. 필요한 것이 없으면 만들지 말고 `## 사용자 질문`에 올린다.
 - 읽을 문서는 sketch의 `sources`와 규칙이 걸린 정본 절뿐이다. 이유: 토큰을 아끼고 입력을 좁힌다.
 
 ## 입출력 프로토콜
 
 - 입력: `docs/records/sketches/<이슈>-*.md`(`status: 승인됨`), 그 sketch가 가리키는 정본 절, `src/test/**`. 재호출이면 이전 note와 지적한 리뷰 리포트.
-- 쓰기 범위: `src/test/**`와 아래 note·bug-report 파일. 강제는 hook(#136)이 맡지만 hook이 없어도 지킨다.
+- 쓰기 범위: `src/test/**`와 아래 note·bug-report 파일. hook이 강제하지만 hook이 없어도 지킨다.
 - 출력: `_workspace/<run-id>/20_test-writer_note_q<k>.md`, 버그가 있을 때만 `20_test-writer_bug-report_q<k>.md`
 
 ```markdown
