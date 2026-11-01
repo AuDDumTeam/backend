@@ -41,3 +41,16 @@ auddum:
       secret: ${JWT_SECRET}
   anon-cookie:
     secret: ${ANON_COOKIE_SECRET}
+
+management:
+  # 웹에 여는 Actuator 엔드포인트는 health 하나다. 지표 노출은 모니터링 작업(#23)이 넓힌다.
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      # 켜 두면 응답에 groups(liveness, readiness)가 함께 나온다. 응답을 status 하나로 둔다.
+      probes:
+        enabled: false
