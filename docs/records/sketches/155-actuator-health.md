@@ -45,6 +45,8 @@ status: 승인됨
 - 질문 3. 노출 범위를 이 이슈에서 어디까지 정하는가? 답: `health` 하나만 열고, 지표(`prometheus`) 노출은 #23이 `배포.md`의 방침(지표는 노출하고 포트는 네트워크로 닫는다)대로 넓힌다(사용자, 2026-11-01).
 - 질문 4. `management.*` 설정은 어디에 두는가? 답: 공통 `application.yaml`(사용자, 2026-11-01).
 - 질문 5. 테스트 범위는? 답: H2 + `MockMvc`만. 실제 MySQL 연결 상태는 배포 환경(#21)에서 확인한다(사용자, 2026-11-01).
+- 질문 6. 구현 중 발견: `src/test/resources/application.yaml`이 메인 `application.yaml`을 가려서 메인의 `management.*`를 테스트가 읽지 못한다. 어떻게 검증하는가? 답: 테스트 `application.yaml`에도 같은 `management.*`를 복제한다. 한쪽만 고치면 어긋나도 테스트가 통과하는 한계를 안고 간다(사용자, 2026-11-01).
+- 질문 7. 구현 중 발견: 기본 헬스 응답에 `groups: [liveness, readiness]`가 함께 나와 "키가 `status` 하나뿐"을 지키지 못한다. 답: `management.endpoint.health.probes.enabled=false`로 없앤다(환경 변수로 실험해 `status`만 남는 것을 확인했다. 규칙은 그대로이고 구현 세부다).
 
 ## 구조
 
