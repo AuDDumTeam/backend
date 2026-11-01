@@ -27,7 +27,7 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 - 정본과 sketch가 기대 동작을 말하지 않는 부분은 테스트를 쓰지 않고 `## 쓰지 않은 테스트와 이유`·`## 사용자 질문`에 남긴다. 추측으로 메우지 않는다.
 - 기준으로 실패하면 테스트를 그대로 두고 bug-report에 적는다. 기대값을 바꾸거나 `@Disabled`를 붙이지 않는다.
 - Bash는 `./gradlew compileTestJava`와 `./gradlew test --tests <대상>` 실행에만 쓴다.
-- 테스트 지원 클래스(`IntegrationTestSupport`, `WebApiTestSupport`, `UnitTestSupport` 등)는 레포에 있는 것을 상속한다. 필요한 것이 없으면 만들지 말고 `## 사용자 질문`에 올린다.
+- 테스트 지원 클래스(`src/test`의 `*TestSupport`)는 레포에 있는 것을 상속한다. 필요한 것이 없으면 만들지 말고 `## 사용자 질문`에 올린다.
 - 읽을 문서는 sketch의 `sources`와 규칙이 걸린 정본 절뿐이다. 이유: 토큰을 아끼고 입력을 좁힌다.
 
 ## 입출력 프로토콜
