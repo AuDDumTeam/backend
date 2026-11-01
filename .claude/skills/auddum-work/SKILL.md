@@ -20,10 +20,13 @@ disable-model-invocation: true
 |---|---|---|---|
 | 다음에 뭘 할지 | next | `references/next.md` | #135 |
 | 이슈를 시작한다, sketch를 쓴다·승인받는다 | start | `references/start.md` | #131 |
+| 작은 일(동작·규칙이 안 바뀜) | small | `references/small.md` | #131 |
 | 테스트·구현·검증·리뷰 | build | `references/build.md` | #132 |
 | 정본 갱신, 교훈, sketch 마무리 | wrap | `references/wrap.md` | #133 |
 | Draft PR을 연다 | pr | `references/pr.md` | #133 |
 | PR 코멘트를 처리한다 | revise | `references/revise.md` | #134 |
+
+small은 전용 커맨드가 없다. `/start`가 크기를 구분해 작은 일이면 small로 넘긴다.
 
 요청이 둘 이상에 걸리면 앞 라우트부터 하나씩 한다. 한 번에 여러 라우트를 읽지 않는다(읽는 양을 줄이려고 나눈 것이다).
 
