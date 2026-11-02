@@ -1,7 +1,7 @@
 ---
 issue: 76
-sources: [이슈 #76, features/02-투표-만들기.md, features/07-로그인과-회원.md, features/06-관리자-조치.md, domain/도메인-모델.md]
-features: [02-투표-만들기]
+sources: [이슈 #76, features/02-투표-만들기와-삭제.md, features/07-로그인과-회원.md, features/06-관리자-조치.md, domain/도메인-모델.md]
+features: [02-투표-만들기와-삭제]
 ids: [UC-17, OP-08, P-01, P-02, P-05, P-29, P-30, R-POLL-06, R-POLL-09, R-POLL-13, R-POLL-16, R-POLL-17, R-MEMBER-11]
 decisions: []
 status: 완료
@@ -34,7 +34,7 @@ status: 완료
 ## 건드리는 것
 
 - 바뀌는 것: `PollCommandService`에 삭제 메서드, `PollWebApi`·`PollWebApiDocs`에 `DELETE /{pollId}`, 생성 문서(`docs/generated/API-목록.md`, `openapi.json`).
-- 바뀌는 문서(wrap): `02-투표-만들기.md`(사용하는 API 표의 "구현 전" 문구, 이력 표, 테스트 이름 칸), UC-17의 기록 문구(삭제 시각은 `updated_at`), `설계-결정.md` 4절 알려진 한계(경합 시 마지막 쓰기), 로드맵 M5의 #76 체크박스.
+- 바뀌는 문서(wrap): `02-투표-만들기와-삭제.md`(사용하는 API 표의 "구현 전" 문구, 이력 표, 테스트 이름 칸), UC-17의 기록 문구(삭제 시각은 `updated_at`), `설계-결정.md` 4절 알려진 한계(경합 시 마지막 쓰기), 로드맵 M5의 #76 체크박스.
 - 건드리지 않는 것: `Poll.deleteByAuthor`(이미 정본과 같다), 관리자 조치, 신고 도메인, DB 스키마(Q1: `updated_at`을 쓰므로 변경 없음), 신고 처리(Q3: 그대로 둠), 참여 API.
 
 ## 접근
@@ -83,7 +83,7 @@ status: 완료
 
 ## 결과
 
-`DELETE /api/v1/polls/{pollId}`를 만들었다. `PollCommandService.deleteByAuthor`가 회원 상태 확인(`getActiveMember`) → `pollReader.find` → `Poll.deleteByAuthor` 순으로 한 트랜잭션에서 처리하고, `PollWebApi.deletePoll`이 204로 응답한다. 도메인 규칙은 이미 있어서 새로 쓰지 않았다. 서비스 테스트 10개(규칙 전부와 삭제 뒤 참여 보존)와 슬라이스 테스트 1개를 썼고, 생성 문서(`API-목록.md` 15개, `openapi.json`)를 다시 만들었다. 정본은 `02-투표-만들기.md`(UC-17 문구, 테스트 칸, API 표, 이력), `설계-결정.md` 4절(경합 한계), 로드맵에 반영했다. 리뷰: sketch-reviewer r1 FAIL → r2 PASS_WITH_FIXES, domain-reviewer·code-reviewer PASS_WITH_FIXES(반영), fact-verifier r1은 잘못된 브랜치 입력으로 FAIL → r2 PASS_WITH_FIXES.
+`DELETE /api/v1/polls/{pollId}`를 만들었다. `PollCommandService.deleteByAuthor`가 회원 상태 확인(`getActiveMember`) → `pollReader.find` → `Poll.deleteByAuthor` 순으로 한 트랜잭션에서 처리하고, `PollWebApi.deletePoll`이 204로 응답한다. 도메인 규칙은 이미 있어서 새로 쓰지 않았다. 서비스 테스트 10개(규칙 전부와 삭제 뒤 참여 보존)와 슬라이스 테스트 1개를 썼고, 생성 문서(`API-목록.md` 15개, `openapi.json`)를 다시 만들었다. 정본은 `02-투표-만들기와-삭제.md`(UC-17 문구, 테스트 칸, API 표, 이력), `설계-결정.md` 4절(경합 한계), 로드맵에 반영했다. 리뷰: sketch-reviewer r1 FAIL → r2 PASS_WITH_FIXES, domain-reviewer·code-reviewer PASS_WITH_FIXES(반영), fact-verifier r1은 잘못된 브랜치 입력으로 FAIL → r2 PASS_WITH_FIXES.
 
 계획과 달라진 점:
 - API 테스트: 계획한 신규 `PollDeleteWebApiTest`(체인 성격) 대신 기존 `PollWebApiTest`에 슬라이스 테스트 1개만 넣었다. `테스트-전략.md`의 계층 구분(controller 슬라이스는 매핑·인자·응답 모양만, 오류 매핑·입력 검증은 안 본다)과 사용자 결정(2026-11-02)에 따라 체인 테스트와 400·404·401 API 테스트는 두지 않았다. 해당 규칙은 서비스 테스트(실제 DB)와 기존 `PollReader`·`@CurrentMemberId` 동작이 확인한다. 위 규칙 표의 "새 `PollDeleteWebApiTest`"와 구조 칸의 해당 파일은 이 결정으로 쓰지 않았다.
