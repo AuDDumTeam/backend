@@ -1,7 +1,7 @@
 package org.kwakmunsu.auddum.report.application;
 
 import lombok.RequiredArgsConstructor;
-import org.kwakmunsu.auddum.member.application.MemberReader;
+import org.kwakmunsu.auddum.member.application.MemberValidator;
 import org.kwakmunsu.auddum.report.application.dto.ReporterCredential;
 import org.kwakmunsu.auddum.report.domain.Reporter;
 import org.kwakmunsu.auddum.support.anon.AnonIdentity;
@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component;
 public class ReporterResolver {
 
     private final AnonIdentityResolver anonIdentityResolver;
-    private final MemberReader memberReader;
+    private final MemberValidator memberValidator;
 
     public ResolvedReporter resolve(ReporterCredential credential) {
         if (credential.isMember()) {
-            memberReader.getActiveMember(credential.memberId());
+            memberValidator.validateActive(credential.memberId());
 
             return ResolvedReporter.existing(Reporter.member(credential.memberId()));
         }

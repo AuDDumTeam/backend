@@ -23,6 +23,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.auddum.member.application.MemberReader;
+import org.kwakmunsu.auddum.member.application.MemberValidator;
 import org.kwakmunsu.auddum.member.domain.MemberErrorCode;
 import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.member.domain.MemberStatus;
@@ -52,7 +53,7 @@ class VoterResolverTest {
     private final AnonCookieProvider anonCookieProvider = new AnonCookieProvider(new AnonCookieProperties(SECRET));
     private final MemberJpaRepository memberRepository = mock(MemberJpaRepository.class);
     private final MemberReader memberReader = new MemberReader(memberRepository, mock(MemberAuthJpaRepository.class));
-    private final VoterResolver resolver = new VoterResolver(new AnonIdentityResolver(anonCookieProvider), memberReader);
+    private final VoterResolver resolver = new VoterResolver(new AnonIdentityResolver(anonCookieProvider), new MemberValidator(memberReader));
 
     private final Logger anonLogger = (Logger) LoggerFactory.getLogger("org.kwakmunsu.auddum.support.anon");
     private final ListAppender<ILoggingEvent> appender = new ListAppender<>();

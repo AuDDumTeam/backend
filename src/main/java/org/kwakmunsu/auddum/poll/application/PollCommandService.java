@@ -3,7 +3,7 @@ package org.kwakmunsu.auddum.poll.application;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.kwakmunsu.auddum.member.application.MemberReader;
+import org.kwakmunsu.auddum.member.application.MemberValidator;
 import org.kwakmunsu.auddum.poll.application.dto.NewPoll;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
@@ -17,7 +17,7 @@ public class PollCommandService {
     private final PollWriter pollWriter;
     private final PollValidator pollValidator;
     private final PollReader pollReader;
-    private final MemberReader memberReader;
+    private final MemberValidator memberValidator;
 
     /**
      * 새로운 투표를 생성합니다. 정상 회원만 만들 수 있고(정지 403, 탈퇴·없음 401), 입력 검증, 직전 동일 질문(409), 생성 간격(429) 순서로 판단합니다.
@@ -27,7 +27,7 @@ public class PollCommandService {
      * @return 생성된 투표
      */
     public Poll createPoll(NewPoll newPoll, Long authorId) {
-        memberReader.getActiveMember(authorId);
+        memberValidator.validateActive(authorId);
 
         LocalDateTime now = LocalDateTime.now(TimeConfig.KST);
         Poll poll = pollWriter.createWithUniquePublicId(newPoll, authorId, now);
@@ -48,7 +48,7 @@ public class PollCommandService {
      * @param pollPublicId 삭제할 투표의 공개 ID
      */
     public void deleteByAuthor(Long memberId, String pollPublicId) {
-        memberReader.getActiveMember(memberId);
+        memberValidator.validateActive(memberId);
 
         Poll poll = pollReader.find(pollPublicId);
         poll.deleteByAuthor(memberId);
