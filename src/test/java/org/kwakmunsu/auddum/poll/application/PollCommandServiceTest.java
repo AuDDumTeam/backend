@@ -16,6 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.kwakmunsu.auddum.IntegrationTestSupport;
 import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.member.infrastructure.MemberJpaRepository;
+import org.kwakmunsu.auddum.member.domain.MemberErrorCode;
+import org.kwakmunsu.auddum.support.config.TimeConfig;
+import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.poll.domain.PollErrorCode;
@@ -23,11 +26,15 @@ import org.kwakmunsu.auddum.poll.domain.PublicId;
 import org.kwakmunsu.auddum.poll.domain.PollStatus;
 import org.kwakmunsu.auddum.poll.infrastructure.PollJpaRepository;
 import org.kwakmunsu.auddum.support.error.AuddumException;
+import org.kwakmunsu.auddum.vote.domain.Vote;
+import org.kwakmunsu.auddum.vote.domain.Voter;
+import org.kwakmunsu.auddum.vote.infrastructure.VoteJpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 투표 생성 서비스의 통합 테스트(H2). 작성자는 Member를 저장하고 memberId로 넘긴다.
+ * 투표 생성·삭제 서비스의 통합 테스트(H2). 작성자는 Member를 저장하고 memberId로 넘긴다.
  * 생성 간격과 동일 질문의 경계는 도메인 테스트(PollTest)가 맡고, 여기서는 직전 투표를 찾아 규칙을 적용하는 흐름만 확인한다.
+ * 작성자 삭제는 회원 상태를 투표 조회보다 먼저 확인하는 순서, 404·403 구분(Poll.deleteByAuthor에 위임한 결과), 삭제 뒤 참여 보존을 확인한다.
  */
 @RequiredArgsConstructor
 @Transactional
@@ -36,6 +43,7 @@ class PollCommandServiceTest extends IntegrationTestSupport {
     final PollCommandService pollCommandService;
     final PollJpaRepository pollJpaRepository;
     final MemberJpaRepository memberJpaRepository;
+    final VoteJpaRepository voteJpaRepository;
     final EntityManager entityManager;
 
     @Test
@@ -160,6 +168,146 @@ class PollCommandServiceTest extends IntegrationTestSupport {
             .doesNotThrowAnyException();
 
         assertThat(pollJpaRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    void 작성자가_공개_투표를_삭제하면_DELETED가_되고_투표와_선택지는_남는다() {
+        var authorId = saveMember();
+        var poll = saveOpenPoll(authorId);
+
+        pollCommandService.deleteByAuthor(authorId, poll.getPublicId().value());
+        entityManager.flush();
+        entityManager.clear();
+
+        var found = pollJpaRepository.findById(poll.getId()).orElseThrow();
+        assertThat(found.getStatus()).isEqualTo(PollStatus.DELETED);
+        assertThat(found.getOptions()).hasSize(2);
+    }
+
+    @Test
+    void 작성자가_투표를_삭제해도_이미_들어온_참여는_남는다() {
+        var authorId = saveMember();
+        var poll = saveOpenPoll(authorId);
+        var voterId = saveMember();
+        var vote = voteJpaRepository.saveAndFlush(
+            Vote.cast(poll, 1, Voter.member(voterId), LocalDateTime.now(TimeConfig.KST)));
+
+        pollCommandService.deleteByAuthor(authorId, poll.getPublicId().value());
+        entityManager.flush();
+        entityManager.clear();
+
+        var found = voteJpaRepository.findById(vote.getId()).orElseThrow();
+        assertThat(found.getPollId()).isEqualTo(poll.getId());
+        assertThat(found.getVoter()).isEqualTo(Voter.member(voterId));
+    }
+
+    @Test
+    void 작성자가_아닌_회원이_공개_투표를_삭제하면_FORBIDDEN이고_상태는_그대로다() {
+        var poll = saveOpenPoll(saveMember());
+        var otherId = saveMember();
+
+        assertThatThrownBy(() -> pollCommandService.deleteByAuthor(otherId, poll.getPublicId().value()))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(DefaultErrorCode.FORBIDDEN.getMessage());
+
+        assertThat(pollJpaRepository.findById(poll.getId()).orElseThrow().getStatus()).isEqualTo(PollStatus.PUBLIC);
+    }
+
+    @Test
+    void 작성자가_아닌_회원이_숨김_투표를_삭제하면_POLL_NOT_FOUND다() {
+        var poll = saveOpenPoll(saveMember());
+        poll.hide();
+        entityManager.flush();
+        var otherId = saveMember();
+
+        assertThatThrownBy(() -> pollCommandService.deleteByAuthor(otherId, poll.getPublicId().value()))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 작성자가_아닌_회원이_삭제된_투표를_삭제하면_POLL_NOT_FOUND다() {
+        var poll = saveOpenPoll(saveMember());
+        poll.deleteByAdmin();
+        entityManager.flush();
+        var otherId = saveMember();
+
+        assertThatThrownBy(() -> pollCommandService.deleteByAuthor(otherId, poll.getPublicId().value()))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 작성자라도_관리자가_숨긴_투표는_POLL_NOT_DELETABLE이고_상태는_HIDDEN_그대로다() {
+        var authorId = saveMember();
+        var poll = saveOpenPoll(authorId);
+        poll.hide();
+        entityManager.flush();
+
+        assertThatThrownBy(() -> pollCommandService.deleteByAuthor(authorId, poll.getPublicId().value()))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(PollErrorCode.POLL_NOT_DELETABLE.getMessage());
+
+        assertThat(pollJpaRepository.findById(poll.getId()).orElseThrow().getStatus()).isEqualTo(PollStatus.HIDDEN);
+    }
+
+    @Test
+    void 이미_삭제한_투표를_다시_삭제하면_POLL_NOT_FOUND다() {
+        var authorId = saveMember();
+        var poll = saveOpenPoll(authorId);
+        pollCommandService.deleteByAuthor(authorId, poll.getPublicId().value());
+
+        assertThatThrownBy(() -> pollCommandService.deleteByAuthor(authorId, poll.getPublicId().value()))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 정지_회원은_자기_투표도_삭제할_수_없다() {
+        var authorId = saveMember();
+        var poll = saveOpenPoll(authorId);
+        suspend(authorId);
+
+        assertThatThrownBy(() -> pollCommandService.deleteByAuthor(authorId, poll.getPublicId().value()))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(MemberErrorCode.MEMBER_SUSPENDED.getMessage());
+
+        assertThat(pollJpaRepository.findById(poll.getId()).orElseThrow().getStatus()).isEqualTo(PollStatus.PUBLIC);
+    }
+
+    @Test
+    void 정지_회원은_없는_투표를_삭제해도_투표_조회보다_먼저_MEMBER_SUSPENDED다() {
+        var memberId = saveMember();
+        suspend(memberId);
+
+        assertThatThrownBy(() -> pollCommandService.deleteByAuthor(memberId, PublicId.generate().value()))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(MemberErrorCode.MEMBER_SUSPENDED.getMessage());
+    }
+
+    @Test
+    void 탈퇴한_회원은_UNAUTHENTICATED다() {
+        var authorId = saveMember();
+        var poll = saveOpenPoll(authorId);
+        var author = memberJpaRepository.findById(authorId).orElseThrow();
+        author.withdraw(LocalDateTime.now(TimeConfig.KST));
+        entityManager.flush();
+
+        assertThatThrownBy(() -> pollCommandService.deleteByAuthor(authorId, poll.getPublicId().value()))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
+    }
+
+    private void suspend(Long memberId) {
+        memberJpaRepository.findById(memberId).orElseThrow().suspend(LocalDateTime.now(TimeConfig.KST));
+        entityManager.flush();
+    }
+
+    private Poll saveOpenPoll(Long authorId) {
+        var poll = Poll.create(authorId, QUESTION, Category.SOME, List.of("관심 없음", "그냥 바쁜 것"), null,
+            LocalDateTime.now(TimeConfig.KST));
+
+        return pollJpaRepository.saveAndFlush(poll);
     }
 
     private Long saveMember() {

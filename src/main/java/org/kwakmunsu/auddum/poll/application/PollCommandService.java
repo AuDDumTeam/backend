@@ -16,6 +16,7 @@ public class PollCommandService {
 
     private final PollWriter pollWriter;
     private final PollValidator pollValidator;
+    private final PollReader pollReader;
     private final MemberReader memberReader;
 
     /**
@@ -37,6 +38,22 @@ public class PollCommandService {
         log.info("[PollCommandService] Poll 생성 완료 - pollId={}, authorId={}", saved.getId(), authorId);
 
         return saved;
+    }
+
+    /**
+     * 작성자가 자기 투표를 삭제한다(논리 삭제). 정상 회원만 할 수 있고(정지 403, 탈퇴·없음 401), 회원 상태를 투표 조회보다 먼저 확인한다.
+     * 작성자 판정과 404·403 구분은 {@link Poll#deleteByAuthor}가 맡는다.
+     *
+     * @param memberId 삭제를 요청한 회원 ID
+     * @param pollPublicId 삭제할 투표의 공개 ID
+     */
+    public void deleteByAuthor(Long memberId, String pollPublicId) {
+        memberReader.getActiveMember(memberId);
+
+        Poll poll = pollReader.find(pollPublicId);
+        poll.deleteByAuthor(memberId);
+
+        log.info("[PollCommandService] Poll 삭제 완료 - pollId={}, memberId={}", poll.getId(), memberId);
     }
 
 }
