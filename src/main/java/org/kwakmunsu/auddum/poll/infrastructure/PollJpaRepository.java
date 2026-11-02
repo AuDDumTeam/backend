@@ -1,6 +1,7 @@
 package org.kwakmunsu.auddum.poll.infrastructure;
 
 import java.util.Optional;
+import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.poll.domain.PollStatus;
 import org.springframework.data.domain.Pageable;
@@ -32,5 +33,19 @@ public interface PollJpaRepository extends JpaRepository<Poll, Long> {
         + " order by p.id desc"
     )
     Slice<Poll> findOlderThan(@Param("status") PollStatus status, @Param("id") Long id, Pageable pageable);
+
+    /**
+     * 카테고리 필터가 있는 목록 조회. findOlderThan에 카테고리 조건만 더한다.
+     */
+    @Query("select p from Poll p"
+        + " where p.status = :status and p.category = :category and p.id < :id"
+        + " order by p.id desc"
+    )
+    Slice<Poll> findOlderThanByCategory(
+        @Param("status") PollStatus status,
+        @Param("category") Category category,
+        @Param("id") Long id,
+        Pageable pageable
+    );
 
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.auddum.member.application.MemberReader;
+import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.poll.domain.PollErrorCode;
 import org.kwakmunsu.auddum.poll.domain.PollStatus;
@@ -76,11 +77,16 @@ public class PollReader {
         return pollRepository.findAllById(ids);
     }
 
-    /** 공개 투표를 최신순으로 size개 돌려준다. cursorId(마지막으로 본 내부 id)가 없으면 첫 페이지다. */
-    Slice<Poll> findPublicOlderThan(Long cursorId, int size) {
+    /** 공개 투표를 최신순으로 size개 돌려준다. cursorId(마지막으로 본 내부 id)가 없으면 첫 페이지이고, category가 null이면 모든 카테고리다. */
+    Slice<Poll> findPublicOlderThan(Long cursorId, Category category, int size) {
         long beforeId = cursorId == null ? Long.MAX_VALUE : cursorId;
+        PageRequest pageable = PageRequest.ofSize(size);
 
-        return pollRepository.findOlderThan(PollStatus.PUBLIC, beforeId, PageRequest.ofSize(size));
+        if (category == null) {
+            return pollRepository.findOlderThan(PollStatus.PUBLIC, beforeId, pageable);
+        }
+
+        return pollRepository.findOlderThanByCategory(PollStatus.PUBLIC, category, beforeId, pageable);
     }
 
     /** 작성자의 가장 최근 투표. 처음 만드는 사람이면 비어 있다. */

@@ -39,7 +39,13 @@ public abstract class PollWebApiDocs {
     @ApiResponse(responseCode = "400", description = "MALFORMED_REQUEST: cursor 형식 오류, size가 숫자가 아님")
     public abstract ResponseEntity<PollListResponse> getPolls(
         @Parameter(description = "이전 응답의 nextCursor. 없으면 첫 페이지") String cursor,
-        @Parameter(description = "한 페이지 개수. 기본 20, 1보다 작으면 1, 50을 넘으면 50으로 보정") Integer size
+        @Parameter(description = "한 페이지 개수. 기본 20, 1보다 작으면 1, 50을 넘으면 50으로 보정") Integer size,
+        @Parameter(
+            description = "카테고리 필터. 기본 ALL(전체). "
+                + "SOME, BLIND_DATE, CONTACT, IN_RELATIONSHIP, BREAKUP, LOVE_VALUES, ETC 중 하나만 줄 수 있다(한 번에 하나). "
+                + "그 밖의 값(소문자, 오타, 모르는 값, 반복한 값)은 오류가 아니라 전체로 본다",
+            example = "ALL"
+        ) String category
     );
 
     @Operation(

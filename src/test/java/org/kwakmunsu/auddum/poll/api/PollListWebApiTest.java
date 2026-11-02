@@ -1,6 +1,10 @@
 package org.kwakmunsu.auddum.poll.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -9,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.kwakmunsu.auddum.WebApiTestSupport;
 import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
 import org.kwakmunsu.auddum.poll.domain.Category;
@@ -22,7 +29,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * GET /api/v1/polls 목록 웹 계층(서비스는 목).
- * 정상 응답의 모양만 본다. 조회 규칙은 PollQueryServiceTest가, 참여 수 집계는 PollListParticipantCountChainTest가 맡는다.
+ * 정상 응답의 모양과 category 파라미터(#162)의 요청 매핑을 본다. 조회 규칙은 PollQueryServiceTest가, 참여 수 집계는 PollListParticipantCountChainTest가 맡는다.
  * GET /api/v1/polls/{pollId} 상세는 PollDetailWebApiTest가 맡는다.
  */
 class PollListWebApiTest extends WebApiTestSupport {
@@ -37,7 +44,7 @@ class PollListWebApiTest extends WebApiTestSupport {
     @Test
     void 인증_없이_목록을_조회하면_200과_items_nextCursor를_내린다() {
         var poll = createPoll(CLOSES_AT);
-        given(pollQueryService.getPollSummaries(null, 20)).willReturn(slice(List.of(summary(poll, 42)), true));
+        given(pollQueryService.getPollSummaries(null, null, 20)).willReturn(slice(List.of(summary(poll, 42)), true));
 
         mvcTester.get()
             .uri("/api/v1/polls")
@@ -57,7 +64,8 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void 목록_항목은_내부_id를_노출하지_않는다() {
-        given(pollQueryService.getPollSummaries(null, 20)).willReturn(slice(List.of(summary(createPoll(CLOSES_AT), 0)), false));
+        given(pollQueryService.getPollSummaries(null, null, 20))
+            .willReturn(slice(List.of(summary(createPoll(CLOSES_AT), 0)), false));
 
         var body = readBody("/api/v1/polls");
 
@@ -69,7 +77,7 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void 마감_시각이_없는_투표는_closesAt이_null이고_closed가_false다() {
-        given(pollQueryService.getPollSummaries(null, 20)).willReturn(slice(List.of(summary(createPoll(null), 0)), false));
+        given(pollQueryService.getPollSummaries(null, null, 20)).willReturn(slice(List.of(summary(createPoll(null), 0)), false));
 
         var body = readBody("/api/v1/polls");
 
@@ -82,7 +90,8 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void 마감된_투표는_목록에서_closed가_true다() {
-        given(pollQueryService.getPollSummaries(null, 20)).willReturn(slice(List.of(summary(createClosedPoll(), 0)), false));
+        given(pollQueryService.getPollSummaries(null, null, 20))
+            .willReturn(slice(List.of(summary(createClosedPoll(), 0)), false));
 
         mvcTester.get()
             .uri("/api/v1/polls")
@@ -94,7 +103,7 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void 투표가_없으면_빈_items와_null_nextCursor로_200이다() {
-        given(pollQueryService.getPollSummaries(null, 20)).willReturn(slice(List.of(), false));
+        given(pollQueryService.getPollSummaries(null, null, 20)).willReturn(slice(List.of(), false));
 
         var body = readBody("/api/v1/polls");
 
@@ -105,17 +114,92 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void cursor를_해석하고_size를_서비스에_넘긴다() {
-        given(pollQueryService.getPollSummaries(5L, 10)).willReturn(slice(List.of(), false));
+        given(pollQueryService.getPollSummaries(5L, null, 10)).willReturn(slice(List.of(), false));
 
         mvcTester.get()
             .uri("/api/v1/polls?cursor=eyJpZCI6NX0&size=10")
             .assertThat()
             .hasStatus(HttpStatus.OK);
 
-        verify(pollQueryService).getPollSummaries(5L, 10);
+        verify(pollQueryService).getPollSummaries(5L, null, 10);
+    }
+
+    // ---- category 필터 (#162) ----
+
+    @ParameterizedTest
+    @EnumSource(Category.class)
+    void category가_Category_이름이면_서비스에_그_Category를_넘긴다(Category category) {
+        stubEmptySlice();
+
+        mvcTester.get()
+            .uri("/api/v1/polls")
+            .queryParam("category", category.name())
+            .assertThat()
+            .hasStatus(HttpStatus.OK);
+
+        verify(pollQueryService).getPollSummaries(isNull(), eq(category), eq(20));
+    }
+
+    @Test
+    void category를_안_주면_서비스에_null을_넘기고_200이다() {
+        stubEmptySlice();
+
+        mvcTester.get().uri("/api/v1/polls").assertThat().hasStatus(HttpStatus.OK);
+
+        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
+    }
+
+    @Test
+    void category가_비어_있으면_서비스에_null을_넘기고_200이다() {
+        stubEmptySlice();
+
+        mvcTester.get().uri("/api/v1/polls?category=").assertThat().hasStatus(HttpStatus.OK);
+
+        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
+    }
+
+    @Test
+    void category가_ALL이면_서비스에_null을_넘기고_200이다() {
+        stubEmptySlice();
+
+        mvcTester.get().uri("/api/v1/polls").queryParam("category", "ALL").assertThat().hasStatus(HttpStatus.OK);
+
+        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"some", "SOEM", "UNKNOWN", " SOME", "SOME,ETC"})
+    void category가_모르는_값이면_오류가_아니라_서비스에_null을_넘기고_200이다(String category) {
+        stubEmptySlice();
+
+        mvcTester.get().uri("/api/v1/polls").queryParam("category", category).assertThat().hasStatus(HttpStatus.OK);
+
+        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
+    }
+
+    @Test
+    void category를_여러_번_반복하면_오류가_아니라_서비스에_null을_넘기고_200이다() {
+        stubEmptySlice();
+
+        mvcTester.get().uri("/api/v1/polls?category=SOME&category=ETC").assertThat().hasStatus(HttpStatus.OK);
+
+        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
+    }
+
+    @Test
+    void category와_size를_함께_주면_둘_다_서비스에_넘긴다() {
+        stubEmptySlice();
+
+        mvcTester.get().uri("/api/v1/polls?category=BREAKUP&size=5").assertThat().hasStatus(HttpStatus.OK);
+
+        verify(pollQueryService).getPollSummaries(isNull(), eq(Category.BREAKUP), eq(5));
     }
 
     // ---- 보조 ----
+
+    private void stubEmptySlice() {
+        given(pollQueryService.getPollSummaries(any(), any(), anyInt())).willReturn(slice(List.of(), false));
+    }
 
     private PollSummary summary(Poll poll, long participantCount) {
         return PollSummary.of(poll, participantCount);

@@ -54,10 +54,16 @@ public class PollWebApi extends PollWebApiDocs {
     @GetMapping
     public ResponseEntity<PollListResponse> getPolls(
         @RequestParam(required = false) String cursor,
-        @RequestParam(required = false) Integer size
+        @RequestParam(required = false) Integer size,
+        // defaultValue는 문서에 기본값을 드러내려는 것이다. 해석(ALL·모르는 값은 전체)은 PollListRequest가 한다.
+        @RequestParam(required = false, defaultValue = "ALL") String category
     ) {
-        PollListRequest request = new PollListRequest(cursor, size);
-        Slice<PollSummary> slice = pollQueryService.getPollSummaries(request.cursorId(), request.pageSize());
+        PollListRequest request = new PollListRequest(cursor, size, category);
+        Slice<PollSummary> slice = pollQueryService.getPollSummaries(
+            request.cursorId(),
+            request.categoryFilter(),
+            request.pageSize()
+        );
 
         return ResponseEntity.ok(PollListResponse.of(slice, LocalDateTime.now(TimeConfig.KST)));
     }
