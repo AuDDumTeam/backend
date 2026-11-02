@@ -4,7 +4,7 @@ sources: [이슈 #162, features/01-둘러보기.md, engineering/API-공통-규�
 features: [01-둘러보기]
 ids: [UC-01, P-07, P-23, R-POLL-18]
 decisions: []
-status: 승인됨
+status: 완료
 ---
 
 # GET /polls에 category 필터 파라미터를 추가한다
@@ -107,8 +107,19 @@ status: 승인됨
 
 ## 결과
 
-<!-- 구현 뒤에 채운다 -->
+`GET /polls`가 선택 쿼리 파라미터 `category`를 `Category` 열거형으로 받아 목록을 카테고리 하나로 거른다. 이름 7개 중 하나이면 그 카테고리의 공개 투표만 최신순으로 주고, 생략하거나 비우면(`?category=`) 전체다. 7개 이름이 아닌 값(소문자, 오타, `ALL`)은 400 `MALFORMED_REQUEST`다. 변환 실패 400은 기존 `GlobalExceptionHandler`가 `MALFORMED_REQUEST`로 만들어서 새 오류 처리는 없다. 서비스·`PollReader`·쿼리(`findOlderThanByCategory`)는 1차 그대로다. 커서 페이징과 응답 모양은 그대로다. `01-둘러보기.md`(한눈에, 규칙 표, P-23, 이력)와 `openapi.json`(`category`가 enum 7개)을 고쳤다.
 
-<계획과 달라진 점.>
+계획과 달라진 점:
 
-<한계와 후속. 여러 카테고리 동시 필터, 카테고리 인덱스. PR 본문의 초안이 된다.>
+- 1차(PR #169 초안)는 문자열로 받아 모르는 값을 전체로 보고 `ALL`을 만들었다. 사용자가 열거형 받기를 골라 2차로 되돌려 고쳤다. `PollListRequest`의 category 해석과 `PollListRequestTest`는 지웠고, `ALL`과 기본값도 없앴다.
+- 질문 4(빈 값)는 구현에서 확인됐다. `?category=`는 서비스에 `null`로 넘어가 200이다.
+- 400은 슬라이스가 아니라 새 `PollListCategoryChainTest`에서 본다(질문 6). 이 체인 테스트가 1차 리뷰의 권고 DR-1(필터가 걸린 목록의 JSON 응답 경로)도 채웠다.
+- 정본에는 1차 문장이 먼저 들어갔다가 2차에서 고쳤다.
+
+한계와 후속:
+
+- 여러 카테고리 동시 필터는 없다. 필요해지면 따로 한다.
+- 카테고리 인덱스 `poll(status, category, id)`는 만들지 않았다. 느려지는 것이 측정되면 만든다(`설계-결정.md`의 조회 최적화 인덱스 방침).
+- 프런트가 `ALL`이나 소문자를 보내면 이제 400이다. 1차 PR 초안을 본 프런트가 있다면 알린다.
+- 공백이 붙은 값, 공백만 있는 값, 반복 값은 스프링의 변환에 맡기고 정본에서 약속하지 않는다(질문 5).
+- 두 JPQL 쿼리(`findOlderThan`, `findOlderThanByCategory`)는 필터 조건이 늘면 QueryDSL 등으로 합치는 것을 검토한다.
