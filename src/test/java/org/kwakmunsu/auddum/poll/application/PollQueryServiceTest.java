@@ -55,14 +55,14 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         entityManager.flush();
         entityManager.clear();
 
-        var slice = pollReader.findPublicOlderThan(null, 20);
+        var slice = pollReader.findPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).extracting(Poll::getId).containsExactly(publicPoll.getId());
     }
 
     @Test
     void 투표가_없으면_참여_수_목록도_비어_있다() {
-        var slice = pollQueryService.getPollSummaries(null, 20);
+        var slice = pollQueryService.getPollSummaries(null, null, 20);
 
         assertThat(slice.getContent()).isEmpty();
         assertThat(slice.hasNext()).isFalse();
@@ -73,7 +73,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var first = savePoll("첫째");
         var second = savePoll("둘째");
 
-        var slice = pollQueryService.getPollSummaries(null, 20);
+        var slice = pollQueryService.getPollSummaries(null, null, 20);
 
         assertThat(slice.getContent()).extracting(summary -> summary.poll().getId(), PollSummary::participantCount)
             .containsExactly(tuple(second.getId(), 0L), tuple(first.getId(), 0L));
@@ -85,7 +85,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var second = savePoll("둘째");
         var third = savePoll("셋째");
 
-        var slice = pollQueryService.getPollSummaries(null, 2);
+        var slice = pollQueryService.getPollSummaries(null, null, 2);
 
         assertThat(slice.getContent()).extracting(summary -> summary.poll().getId())
             .containsExactly(third.getId(), second.getId());
@@ -98,7 +98,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         closePoll(closedPoll.getId());
         var openPoll = savePoll("진행 중 투표");
 
-        var slice = pollReader.findPublicOlderThan(null, 20);
+        var slice = pollReader.findPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).extracting(Poll::getId).containsExactly(openPoll.getId(), closedPoll.getId());
         assertThat(slice.getContent().get(1).isClosed(LocalDateTime.now(TimeConfig.KST))).isTrue();
@@ -110,7 +110,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var second = savePoll("둘째");
         var third = savePoll("셋째");
 
-        var slice = pollReader.findPublicOlderThan(null, 20);
+        var slice = pollReader.findPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).extracting(Poll::getId)
             .containsExactly(third.getId(), second.getId(), first.getId());
@@ -122,14 +122,14 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var pastCreatedAt = LocalDateTime.of(2026, 10, 12, 13, 0);
         changeCreatedAt(poll.getId(), pastCreatedAt);
 
-        var slice = pollReader.findPublicOlderThan(null, 20);
+        var slice = pollReader.findPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent().getFirst().getCreatedAt()).isEqualTo(pastCreatedAt);
     }
 
     @Test
     void 투표가_없으면_빈_목록이고_다음_페이지가_없다() {
-        var slice = pollReader.findPublicOlderThan(null, 20);
+        var slice = pollReader.findPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).isEmpty();
         assertThat(slice.hasNext()).isFalse();
@@ -139,7 +139,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void size만큼_내려주고_더_있으면_hasNext다() {
         savePoll(21);
 
-        var slice = pollReader.findPublicOlderThan(null, 20);
+        var slice = pollReader.findPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).hasSize(20);
         assertThat(slice.hasNext()).isTrue();
@@ -149,7 +149,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void size가_50이면_50개를_내려준다() {
         savePoll(51);
 
-        var slice = pollReader.findPublicOlderThan(null, 50);
+        var slice = pollReader.findPublicOlderThan(null, null, 50);
 
         assertThat(slice.getContent()).hasSize(50);
         assertThat(slice.hasNext()).isTrue();
@@ -159,7 +159,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void size가_1이면_한_개와_hasNext를_내려준다() {
         savePoll(3);
 
-        var slice = pollReader.findPublicOlderThan(null, 1);
+        var slice = pollReader.findPublicOlderThan(null, null, 1);
 
         assertThat(slice.getContent()).hasSize(1);
         assertThat(slice.hasNext()).isTrue();
@@ -169,7 +169,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void 남은_개수가_size와_같으면_hasNext가_아니다() {
         savePoll(2);
 
-        var slice = pollReader.findPublicOlderThan(null, 2);
+        var slice = pollReader.findPublicOlderThan(null, null, 2);
 
         assertThat(slice.getContent()).hasSize(2);
         assertThat(slice.hasNext()).isFalse();
@@ -180,9 +180,9 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var saved = savePoll(5);
         var newestFirstIds = new ArrayList<>(saved.reversed().stream().map(Poll::getId).toList());
 
-        var firstPage = pollReader.findPublicOlderThan(null, 2);
-        var secondPage = pollReader.findPublicOlderThan(firstPage.getContent().getLast().getId(), 2);
-        var thirdPage = pollReader.findPublicOlderThan(secondPage.getContent().getLast().getId(), 2);
+        var firstPage = pollReader.findPublicOlderThan(null, null, 2);
+        var secondPage = pollReader.findPublicOlderThan(firstPage.getContent().getLast().getId(), null, 2);
+        var thirdPage = pollReader.findPublicOlderThan(secondPage.getContent().getLast().getId(), null, 2);
 
         assertThat(firstPage.getContent()).extracting(Poll::getId).containsExactlyElementsOf(newestFirstIds.subList(0, 2));
         assertThat(secondPage.getContent()).extracting(Poll::getId).containsExactlyElementsOf(newestFirstIds.subList(2, 4));
@@ -197,16 +197,98 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var first = savePoll("첫째");
         var second = savePoll("둘째");
         var third = savePoll("셋째");
-        var firstPage = pollReader.findPublicOlderThan(null, 1);
+        var firstPage = pollReader.findPublicOlderThan(null, null, 1);
         second.hide();
         entityManager.flush();
         entityManager.clear();
 
-        var secondPage = pollReader.findPublicOlderThan(firstPage.getContent().getLast().getId(), 1);
+        var secondPage = pollReader.findPublicOlderThan(firstPage.getContent().getLast().getId(), null, 1);
 
         assertThat(firstPage.getContent()).extracting(Poll::getId).containsExactly(third.getId());
         assertThat(secondPage.getContent()).extracting(Poll::getId).containsExactly(first.getId());
         assertThat(secondPage.hasNext()).isFalse();
+    }
+
+    // ---- 목록: 카테고리 필터 (#162) ----
+
+    @Test
+    void 카테고리를_주면_그_카테고리의_공개_투표만_최신순으로_내려준다() {
+        var firstSome = savePoll("첫 썸", Category.SOME);
+        savePoll("기타", Category.ETC);
+        var secondSome = savePoll("둘째 썸", Category.SOME);
+        savePoll("이별", Category.BREAKUP);
+
+        var slice = pollQueryService.getPollSummaries(null, Category.SOME, 20);
+
+        assertThat(slice.getContent()).extracting(summary -> summary.poll().getId())
+            .containsExactly(secondSome.getId(), firstSome.getId());
+        assertThat(slice.hasNext()).isFalse();
+    }
+
+    @Test
+    void 카테고리가_null이면_카테고리와_무관하게_모든_공개_투표를_최신순으로_내려준다() {
+        var some = savePoll("썸", Category.SOME);
+        var etc = savePoll("기타", Category.ETC);
+        var breakup = savePoll("이별", Category.BREAKUP);
+
+        var slice = pollQueryService.getPollSummaries(null, null, 20);
+
+        assertThat(slice.getContent()).extracting(summary -> summary.poll().getId())
+            .containsExactly(breakup.getId(), etc.getId(), some.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PollStatus.class, names = {"HIDDEN", "DELETED"})
+    void 카테고리가_맞아도_숨김_삭제_투표는_필터_결과에서_제외한다(PollStatus status) {
+        var publicPoll = savePoll("공개 썸", Category.SOME);
+        var nonPublic = savePoll("비공개 썸", Category.SOME);
+        switch (status) {
+            case HIDDEN -> nonPublic.hide();
+            case DELETED -> nonPublic.deleteByAdmin();
+            case PUBLIC -> { }
+        }
+        entityManager.flush();
+        entityManager.clear();
+
+        var slice = pollReader.findPublicOlderThan(null, Category.SOME, 20);
+
+        assertThat(slice.getContent()).extracting(Poll::getId).containsExactly(publicPoll.getId());
+    }
+
+    @Test
+    void 카테고리를_걸고_size개씩_커서로_이어_가도_걸러진_투표가_빠짐_중복_없이_나온다() {
+        var categories = List.of(Category.SOME, Category.ETC, Category.SOME, Category.SOME, Category.ETC,
+            Category.SOME, Category.SOME);
+        var saved = new ArrayList<Poll>();
+        for (int i = 0; i < categories.size(); i++) {
+            saved.add(savePoll("질문 " + i, categories.get(i)));
+        }
+        entityManager.clear();
+        var someIdsNewestFirst = saved.reversed().stream()
+            .filter(poll -> poll.getCategory() == Category.SOME)
+            .map(Poll::getId)
+            .toList();
+
+        var firstPage = pollReader.findPublicOlderThan(null, Category.SOME, 2);
+        var secondPage = pollReader.findPublicOlderThan(firstPage.getContent().getLast().getId(), Category.SOME, 2);
+        var thirdPage = pollReader.findPublicOlderThan(secondPage.getContent().getLast().getId(), Category.SOME, 2);
+
+        assertThat(firstPage.getContent()).extracting(Poll::getId).containsExactlyElementsOf(someIdsNewestFirst.subList(0, 2));
+        assertThat(secondPage.getContent()).extracting(Poll::getId).containsExactlyElementsOf(someIdsNewestFirst.subList(2, 4));
+        assertThat(thirdPage.getContent()).extracting(Poll::getId).containsExactly(someIdsNewestFirst.get(4));
+        assertThat(firstPage.hasNext()).isTrue();
+        assertThat(secondPage.hasNext()).isTrue();
+        assertThat(thirdPage.hasNext()).isFalse();
+    }
+
+    @Test
+    void 맞는_투표가_없으면_빈_슬라이스다() {
+        savePoll("기타", Category.ETC);
+
+        var slice = pollQueryService.getPollSummaries(null, Category.BREAKUP, 20);
+
+        assertThat(slice.getContent()).isEmpty();
+        assertThat(slice.hasNext()).isFalse();
     }
 
     // ---- 상세 ----
@@ -415,6 +497,12 @@ class PollQueryServiceTest extends IntegrationTestSupport {
 
     private Poll savePoll(String question) {
         return savePoll(question, List.of("가", "나"));
+    }
+
+    private Poll savePoll(String question, Category category) {
+        var poll = Poll.create(getAuthorId(), question, category, List.of("가", "나"), null, LocalDateTime.now(TimeConfig.KST));
+
+        return pollJpaRepository.saveAndFlush(poll);
     }
 
     private Poll savePoll(String question, List<String> options) {

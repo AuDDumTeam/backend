@@ -864,6 +864,15 @@
             "format" : "int32",
             "type" : "integer"
           }
+        }, {
+          "description" : "카테고리 필터. 없으면 전체. SOME, BLIND_DATE, CONTACT, IN_RELATIONSHIP, BREAKUP, LOVE_VALUES, ETC 중 하나만 줄 수 있다(한 번에 하나). 그 밖의 값은 400이다",
+          "in" : "query",
+          "name" : "category",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "SOME", "BLIND_DATE", "CONTACT", "IN_RELATIONSHIP", "BREAKUP", "LOVE_VALUES", "ETC" ],
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -884,7 +893,7 @@
                 }
               }
             },
-            "description" : "MALFORMED_REQUEST: cursor 형식 오류, size가 숫자가 아님"
+            "description" : "MALFORMED_REQUEST: cursor 형식 오류, size가 숫자가 아님, category가 카테고리 이름이 아님"
           }
         },
         "summary" : "투표 목록",
