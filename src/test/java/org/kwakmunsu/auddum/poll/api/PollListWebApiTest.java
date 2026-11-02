@@ -15,7 +15,6 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.kwakmunsu.auddum.WebApiTestSupport;
 import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
 import org.kwakmunsu.auddum.poll.domain.Category;
@@ -154,34 +153,6 @@ class PollListWebApiTest extends WebApiTestSupport {
         stubEmptySlice();
 
         mvcTester.get().uri("/api/v1/polls?category=").assertThat().hasStatus(HttpStatus.OK);
-
-        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
-    }
-
-    @Test
-    void category가_ALL이면_서비스에_null을_넘기고_200이다() {
-        stubEmptySlice();
-
-        mvcTester.get().uri("/api/v1/polls").queryParam("category", "ALL").assertThat().hasStatus(HttpStatus.OK);
-
-        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"some", "SOEM", "UNKNOWN", " SOME", "SOME,ETC"})
-    void category가_모르는_값이면_오류가_아니라_서비스에_null을_넘기고_200이다(String category) {
-        stubEmptySlice();
-
-        mvcTester.get().uri("/api/v1/polls").queryParam("category", category).assertThat().hasStatus(HttpStatus.OK);
-
-        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
-    }
-
-    @Test
-    void category를_여러_번_반복하면_오류가_아니라_서비스에_null을_넘기고_200이다() {
-        stubEmptySlice();
-
-        mvcTester.get().uri("/api/v1/polls?category=SOME&category=ETC").assertThat().hasStatus(HttpStatus.OK);
 
         verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
     }
