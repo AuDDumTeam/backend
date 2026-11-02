@@ -3,7 +3,7 @@
 
 # API 목록
 
-서버가 제공하는 API 14개를 영역별로 모았다. 경로는 모두 `/api/v1`로 시작한다(표에서는 뺐다). 오류의 뜻과 상태는 [오류 코드](오류-코드.md)에 있고, 요청·응답 필드는 [openapi.json](openapi.json)을 스웨거 뷰어나 타입 생성 도구에 넣어 본다. 기능 칸은 그 API를 쓰는 기능 페이지다.
+서버가 제공하는 API 15개를 영역별로 모았다. 경로는 모두 `/api/v1`로 시작한다(표에서는 뺐다). 오류의 뜻과 상태는 [오류 코드](오류-코드.md)에 있고, 요청·응답 필드는 [openapi.json](openapi.json)을 스웨거 뷰어나 타입 생성 도구에 넣어 본다. 기능 칸은 그 API를 쓰는 기능 페이지다.
 
 카카오 로그인 시작과 콜백은 스프링 시큐리티가 처리하는 경로라 이 목록에 없다.
 
@@ -14,6 +14,7 @@
 | `GET /polls` | 투표 목록 | 200 | `MALFORMED_REQUEST` | [01-둘러보기](../features/01-둘러보기.md) |
 | `POST /polls` | 투표 생성 | 201 | `VALIDATION_FAILED`, `MALFORMED_REQUEST`, `UNAUTHENTICATED`, `DUPLICATE_POLL`, `POLL_RATE_LIMITED` | [02-투표-만들기](../features/02-투표-만들기.md) |
 | `GET /polls/{pollId}` | 투표 상세 | 200 | `MALFORMED_REQUEST`, `POLL_NOT_FOUND` | [01-둘러보기](../features/01-둘러보기.md), [03-참여하기](../features/03-참여하기.md), [04-결과-보기](../features/04-결과-보기.md) |
+| `DELETE /polls/{pollId}` | 투표 삭제 | 204 | `MALFORMED_REQUEST`, `UNAUTHENTICATED`, `FORBIDDEN`, `POLL_NOT_DELETABLE`, `MEMBER_SUSPENDED`, `POLL_NOT_FOUND` | [02-투표-만들기](../features/02-투표-만들기.md) |
 
 ## 참여
 

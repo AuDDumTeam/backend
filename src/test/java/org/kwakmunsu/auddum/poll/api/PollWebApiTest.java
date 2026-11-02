@@ -115,6 +115,19 @@ class PollWebApiTest extends WebApiTestSupport {
         );
     }
 
+    @Test
+    void 삭제하면_204를_내리고_본문은_없으며_로그인_회원과_공개_ID를_서비스에_넘긴다() {
+        mvcTester.delete()
+            .uri("/api/v1/polls/{pollId}", "abc123DEF45")
+            .with(loginAs(1L))
+            .assertThat()
+            .hasStatus(HttpStatus.NO_CONTENT)
+            .body()
+            .isEmpty();
+
+        verify(pollCommandService).deleteByAuthor(1L, "abc123DEF45");
+    }
+
     private Poll createPoll(LocalDateTime closesAt) {
         return Poll.create(1L, "읽씹 3시간 뒤 답장, 이거 관심 없는 걸까요?", Category.SOME,
             List.of("관심 없음", "그냥 바쁜 것", "더 지켜봐야 함"), closesAt, LocalDateTime.now());

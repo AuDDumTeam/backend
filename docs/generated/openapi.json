@@ -960,6 +960,39 @@
       }
     },
     "/api/v1/polls/{pollId}" : {
+      "delete" : {
+        "description" : "작성자가 자기 투표를 삭제한다(논리 삭제). 삭제는 되돌릴 수 없고 투표와 참여 기록은 남는다. 로그인(액세스 토큰 쿠키)이 필요하다.",
+        "operationId" : "deletePoll",
+        "parameters" : [ {
+          "description" : "투표 공개 ID(12자 영숫자)",
+          "example" : "aB3dE5fG7hJk",
+          "in" : "path",
+          "name" : "pollId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "삭제됨"
+          },
+          "400" : {
+            "description" : "MALFORMED_REQUEST: 공개 ID 형식 오류"
+          },
+          "401" : {
+            "description" : "UNAUTHENTICATED"
+          },
+          "403" : {
+            "description" : "FORBIDDEN: 작성자가 아닌 공개 투표, POLL_NOT_DELETABLE: 관리자가 숨긴 투표, MEMBER_SUSPENDED: 정지 회원"
+          },
+          "404" : {
+            "description" : "POLL_NOT_FOUND: 없거나 삭제되었거나 작성자가 아닌 숨김·삭제된 투표"
+          }
+        },
+        "summary" : "투표 삭제",
+        "tags" : [ "투표" ]
+      },
       "get" : {
         "description" : "선택지·마감·참여 수·노출 상태(status)와 내 선택(myChoice), 결과(result)를 내린다. result는 마감되었거나 내가 참여했을 때만 내려가고 아니면 null이다. 참여 여부는 회원 ID 또는 익명 쿠키로 판단하며 쿠키는 읽기만 한다. 숨김·삭제 투표는 작성자와 관리자(DB의 role이 ADMIN)에게만 200이고 그 밖에는 404다.",
         "operationId" : "getPoll",

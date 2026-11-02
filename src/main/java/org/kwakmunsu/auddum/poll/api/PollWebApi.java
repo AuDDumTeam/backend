@@ -22,6 +22,7 @@ import org.kwakmunsu.auddum.support.web.OptionalMemberId;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -71,6 +72,17 @@ public class PollWebApi extends PollWebApiDocs {
         PollDetail detail = pollQueryService.getPollDetail(pollId, new Viewer(memberId, anonCookieValue));
 
         return ResponseEntity.ok(PollDetailResponse.from(detail));
+    }
+
+    @Override
+    @DeleteMapping("/{pollId}")
+    public ResponseEntity<Void> deletePoll(
+        @CurrentMemberId Long memberId,
+        @PathVariable String pollId
+    ) {
+        pollCommandService.deleteByAuthor(memberId, pollId);
+
+        return ResponseEntity.noContent().build();
     }
 
 }
