@@ -23,6 +23,7 @@
 - 기준은 docs다. 코드가 docs와 다르면 코드를 고친다. 동작이 바뀌면 같은 PR에서 docs를 고친다(`/wrap`).
 - 브랜치는 git flow(`feature/{이슈번호}-{요약}` ← `develop` ← `main`, 이슈 없는 작은 일은 `chore/*`)이고 release 브랜치는 없다. `main`·`develop`에 직접 커밋·push하지 않고 force push하지 않는다(`docs/howto/개발-워크플로.md`).
 - PR 머지는 사람만 한다(`gh pr merge`는 deny).
+- 커밋 제목은 동사 원형·명사형으로 쓰고(`추가`, `수정`) 도메인이 아닌 변경은 scope를 생략한다. 로컬 중간 커밋은 PR 전에 논리 단위로 다시 묶는다(`docs/howto/개발-워크플로.md`).
 - 경로를 명시해 스테이징한다. `git add -A`·`git add .`는 쓰지 않고, `.env`와 `.env.*`(`.env.example` 제외)는 절대 스테이징하지 않는다.
 - 테스트 메서드 이름은 한글이고 `@DisplayName`은 쓰지 않는다(`docs/engineering/컨벤션.md`).
 - 빌드·테스트: `./gradlew build`, `./gradlew test`
