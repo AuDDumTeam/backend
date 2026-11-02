@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.auddum.member.application.MemberReader;
+import org.kwakmunsu.auddum.member.application.MemberValidator;
 import org.kwakmunsu.auddum.member.domain.MemberErrorCode;
 import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.member.domain.MemberStatus;
@@ -37,7 +38,7 @@ class ReporterResolverTest {
     private final AnonCookieProvider anonCookieProvider = new AnonCookieProvider(new AnonCookieProperties(SECRET));
     private final MemberJpaRepository memberRepository = mock(MemberJpaRepository.class);
     private final MemberReader memberReader = new MemberReader(memberRepository, mock(MemberAuthJpaRepository.class));
-    private final ReporterResolver resolver = new ReporterResolver(new AnonIdentityResolver(anonCookieProvider), memberReader);
+    private final ReporterResolver resolver = new ReporterResolver(new AnonIdentityResolver(anonCookieProvider), new MemberValidator(memberReader));
 
     @BeforeEach
     void stubMember() {

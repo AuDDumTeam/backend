@@ -2,7 +2,7 @@ package org.kwakmunsu.auddum.vote.application;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.kwakmunsu.auddum.member.application.MemberReader;
+import org.kwakmunsu.auddum.member.application.MemberValidator;
 import org.kwakmunsu.auddum.support.anon.AnonIdentity;
 import org.kwakmunsu.auddum.support.anon.AnonIdentityResolver;
 import org.kwakmunsu.auddum.vote.application.dto.VoterCredential;
@@ -19,11 +19,11 @@ import org.springframework.stereotype.Component;
 public class VoterResolver {
 
     private final AnonIdentityResolver anonIdentityResolver;
-    private final MemberReader memberReader;
+    private final MemberValidator memberValidator;
 
     public ResolvedVoter resolve(VoterCredential credential) {
         if (credential.isMember()) {
-            memberReader.getActiveMember(credential.memberId());
+            memberValidator.validateActive(credential.memberId());
 
             return ResolvedVoter.existing(Voter.member(credential.memberId()));
         }
