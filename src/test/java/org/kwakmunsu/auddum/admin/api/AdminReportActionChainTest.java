@@ -18,6 +18,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.kwakmunsu.auddum.DataIntegrationTestSupport;
 import org.kwakmunsu.auddum.auth.api.AuthCookies;
@@ -261,14 +262,30 @@ class AdminReportActionChainTest extends DataIntegrationTestSupport {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"reports/abc/dismiss", "members/abc/suspend", "polls/short/status",
-        "polls/ABCDEFGHIJK!/status", "polls/ABCDEFGHIJKLM/status"})
-    void ID_형식이_틀리면_400_MALFORMED_REQUEST다(String path) {
-        var content = path.endsWith("/status") ? withStatus("hide", body(REASON)) : body(REASON);
-        var result = post(API + path, saveMember(Role.ADMIN), content);
+    @ValueSource(strings = {"reports/abc/dismiss", "members/abc/suspend"})
+    void 숫자_ID_형식이_틀리면_400_MALFORMED_REQUEST다(String path) {
+        var result = post(API + path, saveMember(Role.ADMIN), body(REASON));
 
         assertThat(result).hasStatus(400);
         assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("MALFORMED_REQUEST");
+        assertThat(actionCount()).isZero();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "hide, short",
+        "hide, ABCDEFGHIJK!",
+        "hide, ABCDEFGHIJKLM",
+        "delete, short",
+        "delete, ABCDEFGHIJK!",
+        "delete, ABCDEFGHIJKLM"
+    })
+    void 투표_공개_ID_형식이_틀리면_404_POLL_NOT_FOUND이고_조치_이력이_없다(String action, String malformed) {
+        var result = post(API + "polls/" + malformed + "/status", saveMember(Role.ADMIN),
+            withStatus(action, body(REASON)));
+
+        assertThat(result).hasStatus(404);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("POLL_NOT_FOUND");
         assertThat(actionCount()).isZero();
     }
 

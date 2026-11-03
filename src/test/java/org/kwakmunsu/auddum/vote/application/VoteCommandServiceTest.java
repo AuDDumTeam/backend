@@ -301,10 +301,19 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
     }
 
     @Test
-    void 공개_ID_형식이_틀리면_MALFORMED_REQUEST다() {
+    void 공개_ID_형식이_틀리면_POLL_NOT_FOUND다() {
         assertThatThrownBy(() -> voteCommandService.castVote(choice("short", 1), member(saveMember())))
             .isInstanceOf(AuddumException.class)
-            .hasMessage(DefaultErrorCode.MALFORMED_REQUEST.getMessage());
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 정지_회원이_형식이_틀린_공개_ID로_보내도_투표_조회가_먼저라_POLL_NOT_FOUND다() {
+        var suspendedId = saveSuspendedMember();
+
+        assertThatThrownBy(() -> voteCommandService.castVote(choice("short", 1), member(suspendedId)))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
 
     @Test

@@ -22,8 +22,8 @@ public record PublicId(
         }
     }
 
-    /** 12자 영숫자인지 확인한다. 형식 오류를 400(MALFORMED_REQUEST)으로 구분해야 하는 조회 쪽이 쓴다. */
-    public static boolean isValid(String value) {
+    /** 12자 영숫자인지 확인한다. */
+    static boolean isValid(String value) {
         return value != null && value.length() == LENGTH && value.chars().allMatch(c -> ALPHABET.indexOf(c) >= 0);
     }
 

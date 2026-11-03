@@ -19,10 +19,10 @@ public abstract class AdminPollWebApiDocs {
         description = "투표를 숨기거나(HIDDEN) 삭제하고(DELETED) 그 투표의 대기 신고를 모두 조치 완료로 종료한다. 상태 변경, 신고 종료, 이력 기록은 한 트랜잭션이다. 숨김은 공개 투표만 가능하고 복구할 수 있다. 삭제는 공개·숨김 투표에서 가능하고 복구할 수 없다."
     )
     @ApiResponse(responseCode = "204", description = "조치됨")
-    @ApiResponse(responseCode = "400", description = "VALIDATION_FAILED: 상태 누락·사유 규칙 위반, MALFORMED_REQUEST: 투표 ID 형식 오류·본문 형식 오류·허용되지 않은 상태 값")
+    @ApiResponse(responseCode = "400", description = "VALIDATION_FAILED: 상태 누락·사유 규칙 위반, MALFORMED_REQUEST: 본문 형식 오류·허용되지 않은 상태 값")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED")
     @ApiResponse(responseCode = "403", description = "FORBIDDEN: 관리자가 아님(정지·탈퇴한 관리자 포함)")
-    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 삭제된 투표")
+    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 삭제된 투표")
     @ApiResponse(responseCode = "409", description = "POLL_NOT_PUBLIC: 이미 숨겨진 투표를 숨기려 했다")
     public abstract ResponseEntity<Void> takedownPoll(
         @Parameter(hidden = true) Long adminId,

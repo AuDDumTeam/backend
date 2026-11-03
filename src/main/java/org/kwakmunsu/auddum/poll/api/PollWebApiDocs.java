@@ -55,8 +55,7 @@ public abstract class PollWebApiDocs {
             + "숨김·삭제 투표는 작성자와 관리자(DB의 role이 ADMIN)에게만 200이고 그 밖에는 404다."
     )
     @ApiResponse(responseCode = "200", description = "상세")
-    @ApiResponse(responseCode = "400", description = "MALFORMED_REQUEST: 공개 ID 형식 오류")
-    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 작성자·관리자가 볼 수 없는 숨김·삭제된 투표")
+    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 작성자·관리자가 볼 수 없는 숨김·삭제된 투표")
     public abstract ResponseEntity<PollDetailResponse> getPoll(
         @Parameter(description = "투표 공개 ID(12자 영숫자)", example = "aB3dE5fG7hJk") String pollId,
         @Parameter(hidden = true) Long memberId,
@@ -68,10 +67,9 @@ public abstract class PollWebApiDocs {
         description = "작성자가 자기 투표를 삭제한다(논리 삭제). 삭제는 되돌릴 수 없고 투표와 참여 기록은 남는다. 로그인(액세스 토큰 쿠키)이 필요하다."
     )
     @ApiResponse(responseCode = "204", description = "삭제됨")
-    @ApiResponse(responseCode = "400", description = "MALFORMED_REQUEST: 공개 ID 형식 오류")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED")
     @ApiResponse(responseCode = "403", description = "FORBIDDEN: 작성자가 아닌 공개 투표, POLL_NOT_DELETABLE: 관리자가 숨긴 투표, MEMBER_SUSPENDED: 정지 회원")
-    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 삭제되었거나 작성자가 아닌 숨김·삭제된 투표")
+    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 삭제되었거나 작성자가 아닌 숨김·삭제된 투표")
     public abstract ResponseEntity<Void> deletePoll(
         @Parameter(hidden = true) Long memberId,
         @Parameter(description = "투표 공개 ID(12자 영숫자)", example = "aB3dE5fG7hJk") String pollId

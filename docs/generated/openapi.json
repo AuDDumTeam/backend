@@ -554,7 +554,7 @@
             "description" : "조치됨"
           },
           "400" : {
-            "description" : "VALIDATION_FAILED: 상태 누락·사유 규칙 위반, MALFORMED_REQUEST: 투표 ID 형식 오류·본문 형식 오류·허용되지 않은 상태 값"
+            "description" : "VALIDATION_FAILED: 상태 누락·사유 규칙 위반, MALFORMED_REQUEST: 본문 형식 오류·허용되지 않은 상태 값"
           },
           "401" : {
             "description" : "UNAUTHENTICATED"
@@ -563,7 +563,7 @@
             "description" : "FORBIDDEN: 관리자가 아님(정지·탈퇴한 관리자 포함)"
           },
           "404" : {
-            "description" : "POLL_NOT_FOUND: 없거나 삭제된 투표"
+            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 삭제된 투표"
           },
           "409" : {
             "description" : "POLL_NOT_PUBLIC: 이미 숨겨진 투표를 숨기려 했다"
@@ -986,9 +986,6 @@
           "204" : {
             "description" : "삭제됨"
           },
-          "400" : {
-            "description" : "MALFORMED_REQUEST: 공개 ID 형식 오류"
-          },
           "401" : {
             "description" : "UNAUTHENTICATED"
           },
@@ -996,7 +993,7 @@
             "description" : "FORBIDDEN: 작성자가 아닌 공개 투표, POLL_NOT_DELETABLE: 관리자가 숨긴 투표, MEMBER_SUSPENDED: 정지 회원"
           },
           "404" : {
-            "description" : "POLL_NOT_FOUND: 없거나 삭제되었거나 작성자가 아닌 숨김·삭제된 투표"
+            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 삭제되었거나 작성자가 아닌 숨김·삭제된 투표"
           }
         },
         "summary" : "투표 삭제",
@@ -1026,16 +1023,6 @@
             },
             "description" : "상세"
           },
-          "400" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PollDetailResponse"
-                }
-              }
-            },
-            "description" : "MALFORMED_REQUEST: 공개 ID 형식 오류"
-          },
           "404" : {
             "content" : {
               "*/*" : {
@@ -1044,7 +1031,7 @@
                 }
               }
             },
-            "description" : "POLL_NOT_FOUND: 없거나 작성자·관리자가 볼 수 없는 숨김·삭제된 투표"
+            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 작성자·관리자가 볼 수 없는 숨김·삭제된 투표"
           }
         },
         "summary" : "투표 상세",
@@ -1080,7 +1067,7 @@
             "description" : "접수함"
           },
           "400" : {
-            "description" : "VALIDATION_FAILED(사유 누락·ETC 상세 누락·길이 초과), MALFORMED_REQUEST(공개 ID·본문 형식 오류·허용되지 않은 사유)"
+            "description" : "VALIDATION_FAILED(사유 누락·ETC 상세 누락·길이 초과), MALFORMED_REQUEST(본문 형식 오류·허용되지 않은 사유)"
           },
           "401" : {
             "description" : "UNAUTHENTICATED: 탈퇴했거나 없는 회원"
@@ -1089,7 +1076,7 @@
             "description" : "MEMBER_SUSPENDED"
           },
           "404" : {
-            "description" : "POLL_NOT_FOUND: 없거나 숨김·삭제된 투표"
+            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 숨김·삭제된 투표"
           },
           "409" : {
             "description" : "REPORT_ALREADY_SUBMITTED: 이미 신고함"
@@ -1142,7 +1129,7 @@
                 }
               }
             },
-            "description" : "VALIDATION_FAILED, MALFORMED_REQUEST(공개 ID·본문 형식 오류), INVALID_OPTION"
+            "description" : "VALIDATION_FAILED, MALFORMED_REQUEST(본문 형식 오류), INVALID_OPTION"
           },
           "401" : {
             "content" : {
@@ -1172,7 +1159,7 @@
                 }
               }
             },
-            "description" : "POLL_NOT_FOUND: 없거나 숨김·삭제된 투표"
+            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 숨김·삭제된 투표"
           },
           "409" : {
             "content" : {

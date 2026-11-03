@@ -8,10 +8,13 @@ import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.kwakmunsu.auddum.IntegrationTestSupport;
 import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.member.domain.MemberStatus;
@@ -25,7 +28,6 @@ import org.kwakmunsu.auddum.poll.domain.PollStatus;
 import org.kwakmunsu.auddum.poll.infrastructure.PollJpaRepository;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
 import org.kwakmunsu.auddum.support.error.AuddumException;
-import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -458,11 +460,52 @@ class PollQueryServiceTest extends IntegrationTestSupport {
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
 
-    @Test
-    void 형식이_틀린_공개_ID는_getPublic에서_400_MALFORMED_REQUEST다() {
-        assertThatThrownBy(() -> pollReader.getPublic("not-a-public-id!"))
+    // ---- 형식이 틀린 공개 ID는 없는 투표와 같게 404 (#171) ----
+
+    /** 길이, 문자, 빈 값이 틀린 공개 ID. 마지막은 컬럼 길이(36)를 넘는 값이다. */
+    static Stream<String> malformedPublicIds() {
+        return Stream.of(
+            "not-a-public-id!",
+            "abc",
+            "",
+            "zzzzzzzzzzz",
+            "zzzzzzzzzzzzz",
+            "zzzzzzzzzzz-",
+            "z".repeat(40)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedPublicIds")
+    void 형식이_틀린_공개_ID는_getPublic에서_404_POLL_NOT_FOUND다(String malformed) {
+        assertThatThrownBy(() -> pollReader.getPublic(malformed))
             .isInstanceOf(AuddumException.class)
-            .hasMessage(DefaultErrorCode.MALFORMED_REQUEST.getMessage());
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedPublicIds")
+    void 형식이_틀린_공개_ID는_getReadable에서_404_POLL_NOT_FOUND다(String malformed) {
+        assertThatThrownBy(() -> pollReader.getReadable(malformed, null))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedPublicIds")
+    void 형식이_틀린_공개_ID는_find에서_404_POLL_NOT_FOUND다(String malformed) {
+        assertThatThrownBy(() -> pollReader.find(malformed))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 형식이_틀린_공개_ID는_관리자가_조회해도_getReadable에서_404_POLL_NOT_FOUND다() {
+        var adminId = saveMember(Role.ADMIN);
+
+        assertThatThrownBy(() -> pollReader.getReadable("not-a-public-id!", adminId))
+            .isInstanceOf(AuddumException.class)
+            .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
 
     // ---- 보조 ----
