@@ -12,13 +12,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface PollJpaRepository extends JpaRepository<Poll, Long> {
 
-    boolean existsByPublicIdValue(String publicId);
-
-    /**
-     * 작성자의 가장 최근 투표(삭제·숨김 포함). 생성 간격과 직전 동일 질문 판단에 쓴다.
-     */
-    Optional<Poll> findFirstByAuthorIdOrderByIdDesc(Long authorId);
-
     /**
      * 상세 조회용. 컨트롤러가 트랜잭션 밖에서 선택지를 읽으므로 함께 가져온다.
      */

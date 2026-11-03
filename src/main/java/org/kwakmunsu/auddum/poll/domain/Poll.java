@@ -10,7 +10,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,9 +34,6 @@ public class Poll extends BaseEntity {
 
     static final int MIN_OPTIONS = 2;
     static final int MAX_OPTIONS = 5;
-
-    /** 직전 생성 후 이 시간이 지나야 같은 작성자가 다시 만들 수 있다(예외 정책 P-06). */
-    public static final Duration CREATE_INTERVAL = Duration.ofSeconds(30);
 
     @Embedded
     private PublicId publicId;
@@ -67,7 +63,7 @@ public class Poll extends BaseEntity {
 
     /**
      * 투표를 만든다. 상태는 PUBLIC이고 공개 ID를 새로 발급한다. 선택지 순서(position)는 받은 순서대로 1부터 매긴다.
-     * 공개 ID가 겹치면 저장 시점에 호출한 쪽이 다시 만든다.
+     * 공개 ID가 겹치지 않음은 DB 유니크 제약이 보장한다.
      */
     public static Poll create(
         @NonNull Long authorId,
@@ -120,19 +116,6 @@ public class Poll extends BaseEntity {
 
     public List<PollOption> getOptions() {
         return Collections.unmodifiableList(options);
-    }
-
-    /**
-     * 같은 작성자의 직전 투표 뒤에 이 투표를 만들 수 있는지 점검한다. 질문이 같으면 409(DUPLICATE_POLL)이고,
-     * 직전 생성 후 {@link #CREATE_INTERVAL}이 지나지 않았으면 429(POLL_RATE_LIMITED)다. 둘이 겹치면 409가 우선한다.
-     */
-    public void validateCreatableAfter(Poll latest, LocalDateTime now) {
-        if (question.equals(latest.question)) {
-            throw new AuddumException(PollErrorCode.DUPLICATE_POLL);
-        }
-        if (latest.getCreatedAt().plus(CREATE_INTERVAL).isAfter(now)) {
-            throw new AuddumException(PollErrorCode.POLL_RATE_LIMITED);
-        }
     }
 
     /** 서버 시각이 마감 시각 이상이면 마감이다. 마감 시각이 없으면 마감되지 않는다. */

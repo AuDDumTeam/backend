@@ -29,11 +29,12 @@ import org.kwakmunsu.auddum.support.error.AuddumException;
 import org.kwakmunsu.auddum.vote.domain.Vote;
 import org.kwakmunsu.auddum.vote.domain.Voter;
 import org.kwakmunsu.auddum.vote.infrastructure.VoteJpaRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 투표 생성·삭제 서비스의 통합 테스트(H2). 작성자는 Member를 저장하고 memberId로 넘긴다.
- * 생성 간격과 동일 질문의 경계는 도메인 테스트(PollTest)가 맡고, 여기서는 직전 투표를 찾아 규칙을 적용하는 흐름만 확인한다.
+ * 생성은 연속 생성과 같은 질문을 제한하지 않는 것, 공개 ID가 겹치면 재발급 없이 저장에 실패하는 것을 확인한다.
  * 작성자 삭제는 회원 상태를 투표 조회보다 먼저 확인하는 순서, 404·403 구분(Poll.deleteByAuthor에 위임한 결과), 삭제 뒤 참여 보존을 확인한다.
  */
 @RequiredArgsConstructor
@@ -63,111 +64,54 @@ class PollCommandServiceTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 공개_ID가_이미_있으면_다시_발급해_저장한다() {
+    void 같은_질문으로_연속_생성할_수_있다() {
         var memberId = saveMember();
-        var taken = pollCommandService.createPoll(createNewPoll("먼저 만든 질문"), memberId).getPublicId();
-        var fresh = PublicId.of("zzzzzzzzzzzz");
-
-        try (var publicIds = mockStatic(PublicId.class, CALLS_REAL_METHODS)) {
-            publicIds.when(PublicId::generate).thenReturn(taken, fresh);
-            var created = pollCommandService.createPoll(createNewPoll("다른 질문"), saveMember());
-
-            assertThat(created.getPublicId()).isEqualTo(fresh);
-        }
-    }
-
-    @Test
-    void 공개_ID가_계속_겹치면_IllegalStateException이다() {
-        var memberId = saveMember();
-        var taken = pollCommandService.createPoll(createNewPoll("먼저 만든 질문"), memberId).getPublicId();
-
-        try (var publicIds = mockStatic(PublicId.class, CALLS_REAL_METHODS)) {
-            publicIds.when(PublicId::generate).thenReturn(taken);
-            var otherMember = saveMember();
-
-            assertThatThrownBy(() -> pollCommandService.createPoll(createNewPoll("다른 질문"), otherMember))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("공개 ID를 발급하지 못했다");
-        }
-    }
-
-    @Test
-    void 직후에_다른_질문으로_연속_생성하면_POLL_RATE_LIMITED이고_저장되지_않는다() {
-        var memberId = saveMember();
-        pollCommandService.createPoll(createNewPoll("첫 번째 질문"), memberId);
-
-        assertThatThrownBy(() -> pollCommandService.createPoll(createNewPoll("두 번째 질문"), memberId))
-            .isInstanceOf(AuddumException.class)
-            .hasMessage(PollErrorCode.POLL_RATE_LIMITED.getMessage());
-
-        assertThat(pollJpaRepository.count()).isEqualTo(1);
-    }
-
-    @Test
-    void 직전_생성이_충분히_오래_전이면_다른_질문을_생성할_수_있다() {
-        var memberId = saveMember();
-        savePastPoll(memberId, "예전 질문", LocalDateTime.now().minusDays(30));
-
-        assertThatCode(() -> pollCommandService.createPoll(createNewPoll("새 질문"), memberId))
-            .doesNotThrowAnyException();
-
-        assertThat(pollJpaRepository.count()).isEqualTo(2);
-    }
-
-    @Test
-    void 직전_투표가_삭제되었어도_같은_질문이면_DUPLICATE_POLL이다() {
-        var memberId = saveMember();
-        var deleted = savePastPoll(memberId, QUESTION, LocalDateTime.now().minusDays(30));
-        deleted.deleteByAuthor(memberId);
-        entityManager.flush();
-
-        assertThatThrownBy(() -> pollCommandService.createPoll(createNewPoll(QUESTION), memberId))
-            .isInstanceOf(AuddumException.class)
-            .hasMessage(PollErrorCode.DUPLICATE_POLL.getMessage());
-    }
-
-    @Test
-    void 다른_회원의_직후_생성은_간격_제한을_받지_않는다() {
-        pollCommandService.createPoll(createNewPoll("질문 하나"), saveMember());
-
-        assertThatCode(() -> pollCommandService.createPoll(createNewPoll("질문 둘"), saveMember()))
-            .doesNotThrowAnyException();
-
-        assertThat(pollJpaRepository.count()).isEqualTo(2);
-    }
-
-    @Test
-    void 직전_투표와_같은_질문이면_DUPLICATE_POLL이고_저장되지_않는다() {
-        var memberId = saveMember();
-        savePastPoll(memberId, QUESTION, LocalDateTime.now().minusDays(30));
-
-        assertThatThrownBy(() -> pollCommandService.createPoll(createNewPoll(QUESTION), memberId))
-            .isInstanceOf(AuddumException.class)
-            .hasMessage(PollErrorCode.DUPLICATE_POLL.getMessage());
-
-        assertThat(pollJpaRepository.count()).isEqualTo(1);
-    }
-
-    @Test
-    void 직전이_아닌_과거_투표와_같은_질문은_생성할_수_있다() {
-        var memberId = saveMember();
-        savePastPoll(memberId, QUESTION, LocalDateTime.now().minusDays(30));
-        savePastPoll(memberId, "그 다음 질문", LocalDateTime.now().minusDays(29));
+        pollCommandService.createPoll(createNewPoll(QUESTION), memberId);
 
         assertThatCode(() -> pollCommandService.createPoll(createNewPoll(QUESTION), memberId))
             .doesNotThrowAnyException();
 
-        assertThat(pollJpaRepository.count()).isEqualTo(3);
+        assertThat(pollJpaRepository.count()).isEqualTo(2);
     }
 
     @Test
-    void 다른_회원의_투표와_같은_질문은_생성할_수_있다() {
-        savePastPoll(saveMember(), QUESTION, LocalDateTime.now().minusDays(30));
+    void 다른_질문으로_간격_없이_연속_생성할_수_있다() {
+        var memberId = saveMember();
+        pollCommandService.createPoll(createNewPoll("첫 번째 질문"), memberId);
 
-        assertThatCode(() -> pollCommandService.createPoll(createNewPoll(QUESTION), saveMember()))
+        assertThatCode(() -> pollCommandService.createPoll(createNewPoll("두 번째 질문"), memberId))
             .doesNotThrowAnyException();
 
         assertThat(pollJpaRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    void 삭제한_투표와_같은_질문으로_다시_만들_수_있다() {
+        var memberId = saveMember();
+        var first = pollCommandService.createPoll(createNewPoll(QUESTION), memberId);
+        pollCommandService.deleteByAuthor(memberId, first.getPublicId().value());
+
+        assertThatCode(() -> pollCommandService.createPoll(createNewPoll(QUESTION), memberId))
+            .doesNotThrowAnyException();
+
+        assertThat(pollJpaRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    void 공개_ID가_겹치면_다시_발급하지_않고_저장에_실패한다() {
+        var firstMemberId = saveMember();
+        var otherMemberId = saveMember();
+        var first = pollCommandService.createPoll(createNewPoll("먼저 만든 질문"), firstMemberId);
+        var taken = first.getPublicId();
+        entityManager.flush();
+        var fresh = PublicId.of("zzzzzzzzzzzz");
+
+        try (var publicIds = mockStatic(PublicId.class, CALLS_REAL_METHODS)) {
+            publicIds.when(PublicId::generate).thenReturn(taken, fresh);
+
+            assertThatThrownBy(() -> pollCommandService.createPoll(createNewPoll("다른 질문"), otherMemberId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        }
     }
 
     @Test
@@ -312,19 +256,6 @@ class PollCommandServiceTest extends IntegrationTestSupport {
 
     private Long saveMember() {
         return memberJpaRepository.save(MemberFixture.createMember()).getId();
-    }
-
-    /** 감사가 created_at을 현재 시각으로 채우므로, 저장한 뒤 JPQL 벌크 수정으로 과거 시각을 덮어쓴다. */
-    private Poll savePastPoll(Long memberId, String question, LocalDateTime createdAt) {
-        var poll = Poll.create(memberId, question, Category.ETC, List.of("가", "나"), null, LocalDateTime.now());
-        var saved = pollJpaRepository.saveAndFlush(poll);
-        entityManager.createQuery("update Poll p set p.createdAt = :createdAt where p.id = :id")
-            .setParameter("createdAt", createdAt)
-            .setParameter("id", saved.getId())
-            .executeUpdate();
-        entityManager.clear();
-
-        return pollJpaRepository.findById(saved.getId()).orElseThrow();
     }
 
 }

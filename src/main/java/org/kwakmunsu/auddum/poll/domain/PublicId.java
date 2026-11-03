@@ -31,7 +31,7 @@ public record PublicId(
         return new PublicId(value);
     }
 
-    /** 새 공개 ID를 발급한다. 중복 확인과 재발급은 호출하는 쪽(저장 시점)이 한다. */
+    /** 새 공개 ID를 발급한다. 겹치지 않음은 DB 유니크 제약이 보장한다. */
     public static PublicId generate() {
         StringBuilder builder = new StringBuilder(LENGTH);
 

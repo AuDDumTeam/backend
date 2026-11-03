@@ -24,8 +24,6 @@ public abstract class PollWebApiDocs {
     @ApiResponse(responseCode = "201", description = "생성됨. 본문은 공개 ID")
     @ApiResponse(responseCode = "400", description = "VALIDATION_FAILED(errors에 위반 필드) 또는 MALFORMED_REQUEST")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED")
-    @ApiResponse(responseCode = "409", description = "DUPLICATE_POLL: 직전과 같은 질문")
-    @ApiResponse(responseCode = "429", description = "POLL_RATE_LIMITED: 직전 생성 후 30초 미만")
     public abstract ResponseEntity<String> createPoll(
         @Parameter(hidden = true) Long memberId,
         PollCreateRequest request
