@@ -284,11 +284,23 @@ class ReportSubmitChainTest extends DataIntegrationTestSupport {
     }
 
     @Test
-    void 형식이_틀린_투표_ID는_400_MALFORMED_REQUEST다() {
+    void 형식이_틀린_투표_ID는_404_POLL_NOT_FOUND다() {
         var result = post("short", reasonBody("SPAM"));
 
-        assertThat(result).hasStatus(400);
-        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("MALFORMED_REQUEST");
+        assertThat(result).hasStatus(404);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("POLL_NOT_FOUND");
+        assertThat(result.getResponse().getHeaders(HttpHeaders.SET_COOKIE)).isEmpty();
+        assertThat(reports()).isEmpty();
+    }
+
+    @Test
+    void 정지_회원이_형식이_틀린_투표_ID로_신고하면_투표_조회가_먼저라_404_POLL_NOT_FOUND다() {
+        var suspendedId = saveSuspendedMember();
+
+        var result = post("short", reasonBody("SPAM"), accessCookie(suspendedId));
+
+        assertThat(result).hasStatus(404);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("POLL_NOT_FOUND");
     }
 
     // ---- 정지 회원 (P-05) ----

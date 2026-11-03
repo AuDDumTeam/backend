@@ -159,8 +159,11 @@ class PollDetailChainTest extends VoteIntegrationTestSupport {
     }
 
     @Test
-    void ID_형식_오류는_400이다() {
-        assertThat(mvcTester.get().uri("/api/v1/polls/short").exchange()).hasStatus(400);
+    void 형식이_틀린_투표_ID는_404_POLL_NOT_FOUND다() {
+        var result = mvcTester.get().uri("/api/v1/polls/short").exchange();
+
+        assertThat(result).hasStatus(404);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("POLL_NOT_FOUND");
     }
 
     @Test

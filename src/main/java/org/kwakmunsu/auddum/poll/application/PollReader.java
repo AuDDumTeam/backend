@@ -9,10 +9,8 @@ import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.poll.domain.PollErrorCode;
 import org.kwakmunsu.auddum.poll.domain.PollStatus;
-import org.kwakmunsu.auddum.poll.domain.PublicId;
 import org.kwakmunsu.auddum.poll.infrastructure.PollJpaRepository;
 import org.kwakmunsu.auddum.support.error.AuddumException;
-import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
@@ -33,10 +31,6 @@ public class PollReader {
      * 비회원은 viewerId가 null이다. 관리자는 DB의 role이 ADMIN인 회원이다.
      */
     public Poll getReadable(String publicId, Long viewerId) {
-        if (!PublicId.isValid(publicId)) {
-            throw new AuddumException(DefaultErrorCode.MALFORMED_REQUEST);
-        }
-
         return pollRepository.findByPublicId(publicId)
             .filter(poll -> poll.isReadableBy(viewerId, () -> memberReader.isAdmin(viewerId)))
             .orElseThrow(() -> new AuddumException(PollErrorCode.POLL_NOT_FOUND));
@@ -47,21 +41,13 @@ public class PollReader {
      * 참여·신고처럼 "공개된 투표만 대상"인 쓰기에 쓴다.
      */
     public Poll getPublic(String publicId) {
-        if (!PublicId.isValid(publicId)) {
-            throw new AuddumException(DefaultErrorCode.MALFORMED_REQUEST);
-        }
-
         return pollRepository.findByPublicId(publicId)
             .filter(Poll::isPublic)
             .orElseThrow(() -> new AuddumException(PollErrorCode.POLL_NOT_FOUND));
     }
 
-    /** 노출 상태와 상관없이 공개 ID로 투표 한 건을 돌려준다. 형식이 틀리면 400, 없으면 404다. 관리자 숨김·삭제처럼 노출 상태를 직접 따지는 곳이 쓴다. */
+    /** 노출 상태와 상관없이 공개 ID로 투표 한 건을 돌려준다. 형식이 틀리거나 없으면 404다. 관리자 숨김·삭제처럼 노출 상태를 직접 따지는 곳이 쓴다. */
     public Poll find(String publicId) {
-        if (!PublicId.isValid(publicId)) {
-            throw new AuddumException(DefaultErrorCode.MALFORMED_REQUEST);
-        }
-
         return pollRepository.findByPublicId(publicId)
             .orElseThrow(() -> new AuddumException(PollErrorCode.POLL_NOT_FOUND));
     }

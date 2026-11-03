@@ -22,10 +22,10 @@ public abstract class VoteWebApiDocs {
             + "참여하면 201이며 본문은 { myChoice, result }다. 이미 참여했으면 선택과 관계없이 409이고, 이때는 GET /polls/{pollId}로 내 선택과 결과를 확인한다. 선택을 바꾸는 API는 없다."
     )
     @ApiResponse(responseCode = "201", description = "참여함")
-    @ApiResponse(responseCode = "400", description = "VALIDATION_FAILED, MALFORMED_REQUEST(공개 ID·본문 형식 오류), INVALID_OPTION")
+    @ApiResponse(responseCode = "400", description = "VALIDATION_FAILED, MALFORMED_REQUEST(본문 형식 오류), INVALID_OPTION")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED: 탈퇴했거나 없는 회원")
     @ApiResponse(responseCode = "403", description = "MEMBER_SUSPENDED")
-    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 숨김·삭제된 투표")
+    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 숨김·삭제된 투표")
     @ApiResponse(responseCode = "409", description = "ALREADY_VOTED: 이미 참여함(선택과 관계없음), POLL_CLOSED: 마감됨")
     public abstract ResponseEntity<VoteCastResponse> castVote(
         @Parameter(description = "투표 공개 ID(12자 영숫자)", example = "aB3dE5fG7hJk") String pollId,
