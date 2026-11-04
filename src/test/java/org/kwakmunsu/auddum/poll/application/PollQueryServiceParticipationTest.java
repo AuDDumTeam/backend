@@ -5,8 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.CREATED_AT;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.anonymous;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.anonymousVoter;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.choice;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.member;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.memberVoter;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.memberWithCookie;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.noCredential;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.tamperSignature;
@@ -323,7 +325,7 @@ class PollQueryServiceParticipationTest extends VoteIntegrationTestSupport {
         var poll = savePoll(VoteFixture.openPoll(saveMember()));
         saveVote(poll, 1, Voter.member(saveMember()));
 
-        var cast = voteCommandService.castVote(choice(publicIdOf(poll), 2), member(memberId));
+        var cast = voteCommandService.castVote(choice(publicIdOf(poll), 2), memberVoter(memberId));
         var detail = getPollDetail(publicIdOf(poll), member(memberId));
 
         assertThat(detail.myChoice()).isEqualTo(cast.myChoice());
@@ -335,9 +337,11 @@ class PollQueryServiceParticipationTest extends VoteIntegrationTestSupport {
     void 비회원이_참여해_받은_쿠키로_조회하면_참여_응답과_같은_myChoice와_result다() {
         var poll = savePoll(VoteFixture.openPoll(saveMember()));
 
-        var before = getPollDetail(publicIdOf(poll), noCredential());
-        var cast = voteCommandService.castVote(choice(publicIdOf(poll), 1), noCredential());
-        var after = getPollDetail(publicIdOf(poll), anonymous(cast.newCookieValue()));
+        var cookie = anonCookieProvider.issue();
+
+        var before = getPollDetail(publicIdOf(poll), anonymous(cookie.value()));
+        var cast = voteCommandService.castVote(choice(publicIdOf(poll), 1), anonymousVoter(cookie.id()));
+        var after = getPollDetail(publicIdOf(poll), anonymous(cookie.value()));
 
         assertThat(before.myChoice()).isNull();
         assertThat(before.result()).isNull();
@@ -349,7 +353,7 @@ class PollQueryServiceParticipationTest extends VoteIntegrationTestSupport {
     void 참여한_뒤_마감되어도_상세의_myChoice는_유지되고_result가_공개된다() {
         var memberId = saveMember();
         var poll = savePoll(VoteFixture.pollClosingInOneHour(saveMember()));
-        voteCommandService.castVote(choice(publicIdOf(poll), 2), member(memberId));
+        voteCommandService.castVote(choice(publicIdOf(poll), 2), memberVoter(memberId));
         savePoll(VoteFixture.expire(poll));
 
         var detail = getPollDetail(publicIdOf(poll), member(memberId));

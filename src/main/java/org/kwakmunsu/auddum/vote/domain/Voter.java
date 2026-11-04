@@ -3,6 +3,7 @@ package org.kwakmunsu.auddum.vote.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
+import java.util.UUID;
 import org.kwakmunsu.auddum.support.error.AuddumException;
 
 /**
@@ -29,6 +30,11 @@ public record Voter(
 
     public static Voter anonymous(AnonId anonId) {
         return new Voter(null, anonId);
+    }
+
+    /** 회원 ID와 익명 식별자 중 하나만 채워 만든다. 둘 다 있거나 둘 다 없으면 거절한다. */
+    public static Voter of(Long memberId, UUID anonId) {
+        return new Voter(memberId, anonId == null ? null : new AnonId(anonId));
     }
 
 }

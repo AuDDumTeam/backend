@@ -3,8 +3,8 @@ package org.kwakmunsu.auddum.vote.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.choice;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.expire;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.member;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.noCredential;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.memberVoter;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.newAnonymousVoter;
 
 import jakarta.servlet.http.Cookie;
 import java.time.LocalDateTime;
@@ -52,9 +52,9 @@ class PollListParticipantCountChainTest extends VoteIntegrationTestSupport {
     @Test
     void 여러_명이_참여한_투표의_participantCount는_참여_기록_건수다() {
         var poll = savePoll(saveMember());
-        voteCommandService.castVote(choice(poll, 1), member(saveMember()));
-        voteCommandService.castVote(choice(poll, 2), member(saveMember()));
-        voteCommandService.castVote(choice(poll, 1), noCredential());
+        voteCommandService.castVote(choice(poll, 1), memberVoter(saveMember()));
+        voteCommandService.castVote(choice(poll, 2), memberVoter(saveMember()));
+        voteCommandService.castVote(choice(poll, 1), newAnonymousVoter());
 
         assertThat(countsByPublicId("/api/v1/polls")).containsEntry(publicId(poll), 3);
     }
@@ -66,12 +66,12 @@ class PollListParticipantCountChainTest extends VoteIntegrationTestSupport {
         var one = savePoll(authorId);
         var three = savePoll(authorId);
         var two = savePoll(authorId);
-        voteCommandService.castVote(choice(one, 1), member(saveMember()));
+        voteCommandService.castVote(choice(one, 1), memberVoter(saveMember()));
         for (var i = 0; i < 3; i++) {
-            voteCommandService.castVote(choice(three, 2), member(saveMember()));
+            voteCommandService.castVote(choice(three, 2), memberVoter(saveMember()));
         }
-        voteCommandService.castVote(choice(two, 1), noCredential());
-        voteCommandService.castVote(choice(two, 2), noCredential());
+        voteCommandService.castVote(choice(two, 1), newAnonymousVoter());
+        voteCommandService.castVote(choice(two, 2), newAnonymousVoter());
 
         var counts = countsByPublicId("/api/v1/polls");
 
@@ -88,9 +88,9 @@ class PollListParticipantCountChainTest extends VoteIntegrationTestSupport {
         var first = savePoll(authorId);
         var second = savePoll(authorId);
         var voterId = saveMember();
-        voteCommandService.castVote(choice(first, 1), member(voterId));
-        voteCommandService.castVote(choice(second, 1), member(voterId));
-        voteCommandService.castVote(choice(second, 2), member(saveMember()));
+        voteCommandService.castVote(choice(first, 1), memberVoter(voterId));
+        voteCommandService.castVote(choice(second, 1), memberVoter(voterId));
+        voteCommandService.castVote(choice(second, 2), memberVoter(saveMember()));
 
         var counts = countsByPublicId("/api/v1/polls");
 
@@ -103,10 +103,10 @@ class PollListParticipantCountChainTest extends VoteIntegrationTestSupport {
         var oldest = savePoll(authorId);
         var middle = savePoll(authorId);
         var newest = savePoll(authorId);
-        voteCommandService.castVote(choice(oldest, 1), member(saveMember()));
-        voteCommandService.castVote(choice(oldest, 1), member(saveMember()));
-        voteCommandService.castVote(choice(oldest, 1), member(saveMember()));
-        voteCommandService.castVote(choice(middle, 2), member(saveMember()));
+        voteCommandService.castVote(choice(oldest, 1), memberVoter(saveMember()));
+        voteCommandService.castVote(choice(oldest, 1), memberVoter(saveMember()));
+        voteCommandService.castVote(choice(oldest, 1), memberVoter(saveMember()));
+        voteCommandService.castVote(choice(middle, 2), memberVoter(saveMember()));
 
         var firstPage = readBody("/api/v1/polls?size=2");
         var firstCounts = counts(firstPage);
@@ -121,8 +121,8 @@ class PollListParticipantCountChainTest extends VoteIntegrationTestSupport {
     void 마감된_투표도_목록에서_실제_참여_수를_내린다() {
         var poll = pollJpaRepository.saveAndFlush(Poll.create(saveMember(), "점심 뭐 먹지?", Category.ETC,
             List.of("국밥", "파스타"), LocalDateTime.now(TimeConfig.KST).plusSeconds(1), LocalDateTime.now(TimeConfig.KST)));
-        voteCommandService.castVote(choice(poll, 1), member(saveMember()));
-        voteCommandService.castVote(choice(poll, 2), member(saveMember()));
+        voteCommandService.castVote(choice(poll, 1), memberVoter(saveMember()));
+        voteCommandService.castVote(choice(poll, 2), memberVoter(saveMember()));
         pollJpaRepository.saveAndFlush(expire(poll));
 
         assertThat(countsByPublicId("/api/v1/polls")).containsEntry(publicId(poll), 2);
@@ -132,7 +132,7 @@ class PollListParticipantCountChainTest extends VoteIntegrationTestSupport {
     void 숨김_투표의_참여는_목록에_나오지_않는다() {
         var visible = savePoll(saveMember());
         var hidden = savePoll(saveMember());
-        voteCommandService.castVote(choice(hidden, 1), member(saveMember()));
+        voteCommandService.castVote(choice(hidden, 1), memberVoter(saveMember()));
         hidden.hide();
         pollJpaRepository.saveAndFlush(hidden);
 
@@ -145,8 +145,8 @@ class PollListParticipantCountChainTest extends VoteIntegrationTestSupport {
     void 삭제된_투표의_상세_participantCount는_보존된_실제_참여_수다() {
         var authorId = saveMember();
         var poll = savePoll(authorId);
-        voteCommandService.castVote(choice(poll, 1), member(saveMember()));
-        voteCommandService.castVote(choice(poll, 2), member(saveMember()));
+        voteCommandService.castVote(choice(poll, 1), memberVoter(saveMember()));
+        voteCommandService.castVote(choice(poll, 2), memberVoter(saveMember()));
         poll.deleteByAdmin();
         pollJpaRepository.saveAndFlush(poll);
         var adminId = saveMember(Role.ADMIN);

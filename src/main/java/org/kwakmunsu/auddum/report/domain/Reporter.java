@@ -35,4 +35,9 @@ public record Reporter(
         return new Reporter(null, anonId);
     }
 
+    /** 회원 ID와 익명 식별자 중 하나만 채워 만든다. 둘 다 있거나 둘 다 없으면 거절한다. */
+    public static Reporter of(Long memberId, UUID anonId) {
+        return new Reporter(memberId, anonId);
+    }
+
 }

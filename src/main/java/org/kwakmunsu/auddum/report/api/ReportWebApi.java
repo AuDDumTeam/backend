@@ -5,12 +5,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.auddum.report.api.dto.ReportSubmitRequest;
 import org.kwakmunsu.auddum.report.application.ReportCommandService;
-import org.kwakmunsu.auddum.report.application.dto.ReporterCredential;
-import org.kwakmunsu.auddum.report.application.dto.SubmitResult;
+import org.kwakmunsu.auddum.report.domain.Reporter;
 import org.kwakmunsu.auddum.support.stereotype.WebApi;
 import org.kwakmunsu.auddum.support.web.AnonCookieName;
 import org.kwakmunsu.auddum.support.web.AnonCookies;
 import org.kwakmunsu.auddum.support.web.OptionalMemberId;
+import org.kwakmunsu.auddum.support.web.Requester;
+import org.kwakmunsu.auddum.support.web.RequesterResolver;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ReportWebApi extends ReportWebApiDocs {
 
     private final ReportCommandService reportCommandService;
+    private final RequesterResolver requesterResolver;
     private final AnonCookies anonCookies;
 
     @Override
@@ -36,14 +38,15 @@ public class ReportWebApi extends ReportWebApiDocs {
         @RequestBody @Valid ReportSubmitRequest request,
         HttpServletResponse response
     ) {
-        SubmitResult submitted = reportCommandService.submit(
+        Requester requester = requesterResolver.resolve(memberId, anonCookieValue);
+        reportCommandService.submit(
             pollId,
             request.toReason(),
-            new ReporterCredential(memberId, anonCookieValue)
+            Reporter.of(requester.memberId(), requester.anonId())
         );
 
-        if (submitted.newCookieValue() != null) {
-            anonCookies.write(response, submitted.newCookieValue());
+        if (requester.newCookieValue() != null) {
+            anonCookies.write(response, requester.newCookieValue());
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).build();

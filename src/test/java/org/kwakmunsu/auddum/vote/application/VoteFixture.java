@@ -2,6 +2,7 @@ package org.kwakmunsu.auddum.vote.application;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.kwakmunsu.auddum.poll.domain.Category;
@@ -10,6 +11,8 @@ import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
 import org.kwakmunsu.auddum.vote.application.dto.PollChoice;
 import org.kwakmunsu.auddum.vote.application.dto.VoterCredential;
+import org.kwakmunsu.auddum.vote.domain.AnonId;
+import org.kwakmunsu.auddum.vote.domain.Voter;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /*
@@ -87,6 +90,21 @@ public final class VoteFixture {
     /** 로그인한 회원이 익명 쿠키도 함께 보낸 요청의 신원 단서. */
     public static VoterCredential memberWithCookie(Long memberId, String cookieValue) {
         return new VoterCredential(memberId, cookieValue);
+    }
+
+    /** 쓰기 서비스에 넘기는 회원 참여자. */
+    public static Voter memberVoter(Long memberId) {
+        return Voter.member(memberId);
+    }
+
+    /** 쓰기 서비스에 넘기는 익명 참여자. 쿠키 해석은 컨트롤러가 하므로 서비스는 UUID만 받는다. */
+    public static Voter anonymousVoter(UUID anonId) {
+        return Voter.anonymous(new AnonId(anonId));
+    }
+
+    /** 처음 보는 익명 참여자. */
+    public static Voter newAnonymousVoter() {
+        return anonymousVoter(UUID.randomUUID());
     }
 
     /** 이 투표의 position번 선택지를 고른다는 요청. */

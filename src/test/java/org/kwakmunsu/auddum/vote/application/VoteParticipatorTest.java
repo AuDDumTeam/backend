@@ -27,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class VoteParticipatorTest extends VoteIntegrationTestSupport {
 
-    private static final String ISSUED_COOKIE = "v1.issued-cookie";
-
     final VoteParticipator voteParticipator;
 
     @Test
@@ -37,7 +35,7 @@ class VoteParticipatorTest extends VoteIntegrationTestSupport {
         saveVote(poll, 1, Voter.member(saveMember()));
         var voter = Voter.member(saveMember());
 
-        var result = voteParticipator.participate(poll, ResolvedVoter.existing(voter), 2, NOW);
+        var result = voteParticipator.participate(poll, voter, 2, NOW);
 
         assertThat(result.myChoice()).isEqualTo(2);
         assertThat(result.result().total()).isEqualTo(2);
@@ -54,7 +52,7 @@ class VoteParticipatorTest extends VoteIntegrationTestSupport {
         var poll = savePoll(VoteFixture.openPoll(saveMember()));
         saveVote(poll, 2, voter);
 
-        assertThatThrownBy(() -> voteParticipator.participate(poll, ResolvedVoter.existing(voter), position, NOW))
+        assertThatThrownBy(() -> voteParticipator.participate(poll, voter, position, NOW))
             .isInstanceOf(AuddumException.class)
             .hasMessage(VoteErrorCode.ALREADY_VOTED.getMessage());
 
@@ -69,7 +67,7 @@ class VoteParticipatorTest extends VoteIntegrationTestSupport {
         var poll = savePoll(VoteFixture.pollClosingAt(saveMember(), NOW));
         saveVote(poll, 1, voter);
 
-        assertThatThrownBy(() -> voteParticipator.participate(poll, ResolvedVoter.existing(voter), position, NOW))
+        assertThatThrownBy(() -> voteParticipator.participate(poll, voter, position, NOW))
             .isInstanceOf(AuddumException.class)
             .hasMessage(VoteErrorCode.ALREADY_VOTED.getMessage());
     }
@@ -80,25 +78,13 @@ class VoteParticipatorTest extends VoteIntegrationTestSupport {
         // 3: 존재하지 않는 선택지여도 마감이 선택지 검증보다 먼저다
         var poll = savePoll(VoteFixture.pollClosingAt(saveMember(), NOW));
 
-        var resolved = ResolvedVoter.existing(Voter.member(saveMember()));
+        var voter = Voter.member(saveMember());
 
-        assertThatThrownBy(() -> voteParticipator.participate(poll, resolved, position, NOW))
+        assertThatThrownBy(() -> voteParticipator.participate(poll, voter, position, NOW))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_CLOSED.getMessage());
 
         assertThat(voteJpaRepository.count()).isZero();
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void 새로_발급한_쿠키_값만_결과에_담긴다(boolean issued) {
-        var poll = savePoll(VoteFixture.openPoll(saveMember()));
-        var voter = Voter.member(saveMember());
-        var resolved = issued ? ResolvedVoter.issued(voter, ISSUED_COOKIE) : ResolvedVoter.existing(voter);
-
-        var result = voteParticipator.participate(poll, resolved, 1, NOW);
-
-        assertThat(result.newCookieValue()).isEqualTo(issued ? ISSUED_COOKIE : null);
     }
 
 }

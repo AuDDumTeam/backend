@@ -20,6 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.kwakmunsu.auddum.DataIntegrationTestSupport;
 import org.kwakmunsu.auddum.auth.api.AuthCookies;
 import org.kwakmunsu.auddum.auth.infrastructure.JwtTokenProvider;
+import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.member.domain.Role;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.support.anon.AnonCookieProvider;
@@ -314,6 +315,45 @@ class ReportSubmitChainTest extends DataIntegrationTestSupport {
 
         assertThat(result).hasStatus(403);
         assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("MEMBER_SUSPENDED");
+        assertThat(reports()).isEmpty();
+    }
+
+    @Test
+    void 정지_회원이_이미_신고한_투표를_다시_신고하면_중복보다_회원_상태가_먼저라_403_MEMBER_SUSPENDED다() {
+        var poll = savePoll(newPoll(saveMember()));
+        var memberId = saveMember();
+        post(poll, reasonBody("SPAM"), accessCookie(memberId));
+        suspend(memberId);
+
+        var result = post(poll, reasonBody("SPAM"), accessCookie(memberId));
+
+        assertThat(result).hasStatus(403);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("MEMBER_SUSPENDED");
+        assertThat(reports()).hasSize(1);
+    }
+
+    @Test
+    void 탈퇴한_회원이_신고하면_401_UNAUTHENTICATED이고_저장되지_않는다() {
+        var poll = savePoll(newPoll(saveMember()));
+        var withdrawn = MemberFixture.createMember();
+        withdrawn.withdraw(LocalDateTime.now(TimeConfig.KST));
+        var withdrawnId = memberJpaRepository.saveAndFlush(withdrawn).getId();
+
+        var result = post(poll, reasonBody("SPAM"), accessCookie(withdrawnId));
+
+        assertThat(result).hasStatus(401);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
+        assertThat(reports()).isEmpty();
+    }
+
+    @Test
+    void 존재하지_않는_회원_ID로_신고하면_401_UNAUTHENTICATED이고_저장되지_않는다() {
+        var poll = savePoll(newPoll(saveMember()));
+
+        var result = post(poll, reasonBody("SPAM"), accessCookie(Long.MAX_VALUE));
+
+        assertThat(result).hasStatus(401);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
         assertThat(reports()).isEmpty();
     }
 

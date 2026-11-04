@@ -32,6 +32,32 @@ class VoterTest {
         assertThat(voter.memberId()).isNull();
     }
 
+    @Test
+    void of는_회원_ID만_주면_회원_참여자를_만든다() {
+        assertThat(Voter.of(7L, null)).isEqualTo(Voter.member(7L));
+    }
+
+    @Test
+    void of는_익명_UUID만_주면_익명_참여자를_만든다() {
+        var id = UUID.randomUUID();
+
+        assertThat(Voter.of(null, id)).isEqualTo(Voter.anonymous(new AnonId(id)));
+    }
+
+    @Test
+    void of는_회원_ID와_UUID를_둘_다_주면_거절한다() {
+        assertThatThrownBy(() -> Voter.of(7L, UUID.randomUUID()))
+                .isInstanceOf(AuddumException.class)
+                .hasMessage("참여자는 회원 ID와 익명 식별자 중 하나여야 합니다.");
+    }
+
+    @Test
+    void of는_둘_다_비우면_거절한다() {
+        assertThatThrownBy(() -> Voter.of(null, null))
+                .isInstanceOf(AuddumException.class)
+                .hasMessage("참여자는 회원 ID와 익명 식별자 중 하나여야 합니다.");
+    }
+
     @ParameterizedTest
     @MethodSource("정확히_하나가_아닌_조합")
     void 회원_ID와_익명_식별자는_정확히_하나만_줄_수_있다(Long memberId, AnonId anonId) {
