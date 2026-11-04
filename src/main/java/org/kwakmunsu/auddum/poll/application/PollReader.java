@@ -22,6 +22,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class PollReader {
 
+    /** 작성자가 자기 목록에서 보는 노출 상태. 삭제된 투표는 뺀다. */
+    private static final List<PollStatus> AUTHOR_LISTED_STATUSES = List.of(PollStatus.PUBLIC, PollStatus.HIDDEN);
+
     private final MemberReader memberReader;
     private final PollJpaRepository pollRepository;
 
@@ -72,6 +75,18 @@ public class PollReader {
         }
 
         return pollRepository.findOlderThanByCategory(PollStatus.PUBLIC, category, beforeId, pageable);
+    }
+
+    /** 작성자가 올린 공개·숨김 투표를 최신순으로 size개 돌려준다(삭제 투표는 뺀다). cursorId(마지막으로 본 내부 id)가 없으면 첫 페이지다. */
+    Slice<Poll> findAllByAuthorOlderThan(Long authorId, Long cursorId, int size) {
+        long beforeId = cursorId == null ? Long.MAX_VALUE : cursorId;
+
+        return pollRepository.findByAuthorOlderThan(authorId, AUTHOR_LISTED_STATUSES, beforeId, PageRequest.ofSize(size));
+    }
+
+    /** 작성자의 목록에 나올 수 있는 투표(공개·숨김)의 전체 개수. */
+    long countByAuthor(Long authorId) {
+        return pollRepository.countByAuthorIdAndStatusIn(authorId, AUTHOR_LISTED_STATUSES);
     }
 
 }

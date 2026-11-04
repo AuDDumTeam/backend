@@ -17,7 +17,7 @@ import org.kwakmunsu.auddum.support.error.AuddumException;
 import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
 
 /**
- * 쓰기 가능한 회원인지 검증하는 단위 테스트(R-MEMBER-11). 탈퇴 401 UNAUTHENTICATED, 없음 404 MEMBER_NOT_FOUND, 정지 403 MEMBER_SUSPENDED.
+ * 쓰기 가능한 회원(validateActive)과 읽기 가능한 회원(validateNotWithdrawn)을 검증하는 단위 테스트(R-MEMBER-11). 탈퇴 401 UNAUTHENTICATED, 없음 404 MEMBER_NOT_FOUND, 정지 403 MEMBER_SUSPENDED.
  * MemberReader는 실제 객체를 쓰고 repository만 목으로 둔다.
  */
 class MemberValidatorTest {
@@ -61,6 +61,34 @@ class MemberValidatorTest {
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> validator.validateActive(MEMBER_ID))
+                .isInstanceOf(AuddumException.class)
+                .hasMessage(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 읽기_검증은_정지_회원도_통과한다() {
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(
+                MemberFixture.changeStatus(MemberFixture.createMember(), MemberStatus.SUSPENDED)));
+
+        assertThatCode(() -> validator.validateNotWithdrawn(MEMBER_ID)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void 읽기_검증은_탈퇴한_회원이면_UNAUTHENTICATED다() {
+        var withdrawn = MemberFixture.createMember();
+        withdrawn.withdraw(LocalDateTime.of(2026, 10, 19, 12, 0));
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(withdrawn));
+
+        assertThatThrownBy(() -> validator.validateNotWithdrawn(MEMBER_ID))
+                .isInstanceOf(AuddumException.class)
+                .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
+    }
+
+    @Test
+    void 읽기_검증은_없는_회원이면_MEMBER_NOT_FOUND다() {
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> validator.validateNotWithdrawn(MEMBER_ID))
                 .isInstanceOf(AuddumException.class)
                 .hasMessage(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
     }
