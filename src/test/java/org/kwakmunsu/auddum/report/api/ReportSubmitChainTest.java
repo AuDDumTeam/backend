@@ -347,13 +347,13 @@ class ReportSubmitChainTest extends DataIntegrationTestSupport {
     }
 
     @Test
-    void 존재하지_않는_회원_ID로_신고하면_401_UNAUTHENTICATED이고_저장되지_않는다() {
+    void 존재하지_않는_회원_ID로_신고하면_404_MEMBER_NOT_FOUND이고_저장되지_않는다() {
         var poll = savePoll(newPoll(saveMember()));
 
         var result = post(poll, reasonBody("SPAM"), accessCookie(Long.MAX_VALUE));
 
-        assertThat(result).hasStatus(401);
-        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
+        assertThat(result).hasStatus(404);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("MEMBER_NOT_FOUND");
         assertThat(reports()).isEmpty();
     }
 

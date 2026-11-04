@@ -17,7 +17,7 @@ import org.kwakmunsu.auddum.support.error.AuddumException;
 import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
 
 /**
- * 쓰기 가능한 회원인지 검증하는 단위 테스트(R-MEMBER-11). 없거나 탈퇴 401 UNAUTHENTICATED, 정지 403 MEMBER_SUSPENDED.
+ * 쓰기 가능한 회원인지 검증하는 단위 테스트(R-MEMBER-11). 탈퇴 401 UNAUTHENTICATED, 없음 404 MEMBER_NOT_FOUND, 정지 403 MEMBER_SUSPENDED.
  * MemberReader는 실제 객체를 쓰고 repository만 목으로 둔다.
  */
 class MemberValidatorTest {
@@ -57,12 +57,12 @@ class MemberValidatorTest {
     }
 
     @Test
-    void 없는_회원이면_UNAUTHENTICATED다() {
+    void 없는_회원이면_MEMBER_NOT_FOUND다() {
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> validator.validateActive(MEMBER_ID))
                 .isInstanceOf(AuddumException.class)
-                .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
+                .hasMessage(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
     }
 
 }

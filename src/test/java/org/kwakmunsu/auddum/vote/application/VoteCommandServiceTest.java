@@ -350,14 +350,14 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
     }
 
     @Test
-    void 존재하지_않는_회원_ID는_UNAUTHENTICATED다() {
+    void 존재하지_않는_회원_ID는_MEMBER_NOT_FOUND다() {
         var poll = savePoll(VoteFixture.openPoll(saveMember()));
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
             memberVoter(Long.MAX_VALUE)))
             .isInstanceOf(AuddumException.class)
-            .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
+            .hasMessage(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
     }
 
 }

@@ -9,7 +9,6 @@ import org.kwakmunsu.auddum.member.domain.MemberErrorCode;
 import org.kwakmunsu.auddum.member.infrastructure.MemberAuthJpaRepository;
 import org.kwakmunsu.auddum.member.infrastructure.MemberJpaRepository;
 import org.kwakmunsu.auddum.support.error.AuddumException;
-import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,21 +23,15 @@ public class MemberReader {
     private final MemberJpaRepository memberRepository;
     private final MemberAuthJpaRepository memberAuthRepository;
 
-    /** 요청한 회원을 가져온다. 없는 회원이면 401이다. */
-    public Member getMember(Long memberId) {
-        return memberRepository.findById(memberId)
-            .orElseThrow(() -> new AuddumException(DefaultErrorCode.UNAUTHENTICATED));
-    }
-
-    /** 상태와 상관없이 회원을 찾는다. 없으면 404(MEMBER_NOT_FOUND)다. 관리자 조치처럼 대상 회원의 상태를 직접 따지는 곳이 쓴다. */
-    public Member find(Long memberId) {
+    /** 상태와 상관없이 회원을 가져온다. 없으면 404(MEMBER_NOT_FOUND)다. 요청한 회원이든 관리자 조치의 대상 회원이든 같다. */
+    public Member get(Long memberId) {
         return memberRepository.findById(memberId)
             .orElseThrow(() -> new AuddumException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
-    /** 탈퇴하지 않은 회원을 가져온다. 없거나 탈퇴했으면 401이다. 정지 회원은 통과한다(정지 중에도 재발급·조회·탈퇴는 할 수 있다). */
+    /** 탈퇴하지 않은 회원을 가져온다. 없으면 404, 탈퇴했으면 401이다. 정지 회원은 통과한다(정지 중에도 재발급·조회·탈퇴는 할 수 있다). */
     public Member getNotWithdrawnMember(Long memberId) {
-        Member member = getMember(memberId);
+        Member member = get(memberId);
         member.validateNotWithdrawn();
 
         return member;

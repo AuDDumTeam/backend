@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * 가정한 이름:
  * - DELETE /api/v1/members/me (204, 쿠키 2개 삭제), POST /api/v1/auth/logout, POST /api/v1/polls
- * - 오류 코드 MEMBER_SUSPENDED(403), UNAUTHENTICATED(401)
+ * - 오류 코드 MEMBER_SUSPENDED(403), UNAUTHENTICATED(401), MEMBER_NOT_FOUND(404, 토큰은 유효한데 회원 행이 없을 때)
  * - 정지 회원은 정지 행위가 아직 없어서 Member의 status 필드를 직접 바꿔 만든다.
  *
  * MockMvc 요청은 테스트와 같은 스레드라 @Transactional로 만든 회원이 요청에서 보이고, 끝나면 롤백된다.
@@ -70,11 +70,11 @@ class MemberStatusAndWithdrawTest extends IntegrationTestSupport {
     }
 
     @Test
-    void DB에_없는_회원의_투표_생성은_401_UNAUTHENTICATED다() {
+    void DB에_없는_회원의_투표_생성은_404_MEMBER_NOT_FOUND다() {
         var result = createPoll(NOT_EXISTING_MEMBER_ID);
 
-        assertThat(result).hasStatus(401);
-        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
+        assertThat(result).hasStatus(404);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("MEMBER_NOT_FOUND");
     }
 
     @Test
@@ -148,6 +148,14 @@ class MemberStatusAndWithdrawTest extends IntegrationTestSupport {
 
         assertThat(result).hasStatus(401);
         assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
+    }
+
+    @Test
+    void DB에_없는_회원의_탈퇴는_404_MEMBER_NOT_FOUND다() {
+        var result = withdraw(NOT_EXISTING_MEMBER_ID);
+
+        assertThat(result).hasStatus(404);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("MEMBER_NOT_FOUND");
     }
 
     @Test

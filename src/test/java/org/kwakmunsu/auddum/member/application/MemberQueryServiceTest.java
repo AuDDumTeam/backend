@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.auddum.IntegrationTestSupport;
 import org.kwakmunsu.auddum.member.domain.Member;
+import org.kwakmunsu.auddum.member.domain.MemberErrorCode;
 import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.member.domain.MemberStatus;
 import org.kwakmunsu.auddum.member.domain.Role;
@@ -59,10 +60,10 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
     }
 
     @Test
-    void DB에_없는_회원이면_401_UNAUTHENTICATED다() {
+    void DB에_없는_회원이면_404_MEMBER_NOT_FOUND다() {
         assertThatThrownBy(() -> memberQueryService.getMyInfo(NOT_EXISTING_MEMBER_ID))
             .isInstanceOf(AuddumException.class)
-            .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
+            .hasMessage(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
     }
 
     private Member saveMember(MemberStatus status) {
