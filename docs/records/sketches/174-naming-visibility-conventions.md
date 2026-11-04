@@ -4,7 +4,7 @@ sources: [이슈 #174, docs/engineering/컨벤션.md, docs/engineering/아키텍
 features: [07-로그인과-회원]
 ids: [R-MEMBER-11]
 decisions: []
-status: 승인됨
+status: 완료
 ---
 
 # 조회 이름 규칙과 record 개행, 접근 제한자를 정리하고 값 객체를 그대로 넘긴다
@@ -122,4 +122,40 @@ status: 승인됨
 
 ## 결과
 
-(구현 뒤에 채운다.)
+`application`의 `*Reader` 조회 이름을 `get`(있어야 하는 단건, 없으면 예외)·`find`(없을 수 있는 단건, `Optional`)·`findAll`(컬렉션)로 정리하고, record 개행과 접근 제한자를 맞추고, 레포지토리가 `AnonId`를 그대로 받게 했다. 규칙은 `컨벤션.md`(조회 메서드 이름, record, 값 객체)와 `아키텍처.md`(가시성 표)에 옮겼다.
+
+- **이름**: `MemberReader.getMember`(401)를 없애고 `find`(404)를 `get`으로 합쳤다. `PollReader.find`는 `getByPublicId`·`getById`, `ReportReader.find`는 `get`으로 바꿨다. 컬렉션 조회 4개는 `findAll…`이 됐다(`findAllByStatusAfter`, `findAllOthersOfSamePoll`, `findAllByReport`, `findAllPublicOlderThan`).
+- **동작 변경 하나**: 요청한 회원이 DB에 없을 때 401이 아니라 404 `MEMBER_NOT_FOUND`다(쓰기·탈퇴·재발급·`GET /members/me`). 탈퇴 401, 정지 403은 그대로다. `인증.md`, `07-로그인과-회원.md`(R-MEMBER-11), `설계-결정.md`, `로드맵.md`(이력 주석)와 Swagger 선언·생성 문서를 같이 고쳤다.
+- **record**: 파라미터 2개 이상인 한 줄 record 25개(파일 24개)를 한 줄에 하나씩으로 바꿨다.
+- **접근 제한자**: 클래스 9개를 package-private으로, `Member.isWithdrawn`을 private으로, 메서드 8개를 package-private으로 좁혔다. 가시성 표에는 `ReportReader`를 예에서 일반화하고 package-private 행을 더했다.
+- **값 객체**: `VoteJpaRepository.findByPollIdAndVoterAnonId(Long, AnonId)`로 바꿨다. `Reporter`는 `UUID`를 유지한다(`설계-결정.md` L49).
+- **커밋**: 이름·동작(`9a8b525`), 문서·Swagger·생성 문서(`bac2106`), Reader 이름(`b2fb12b`), record(`e3be14e`), 접근 제한자(`e69e111`), 값 객체(`80ca286`), 리뷰 반영(`450a218`), 정본(`bc6a287`).
+
+### 계획과 달라진 점
+
+- **회원 조회 이름**: 처음 사용자가 "find로 하자"고 했으나, `find`=`Optional` 규칙과 충돌하고 쓰는 곳이 모두 예외를 원해서 기준을 "의미"(있어야 하는 것은 `get`)로 바꿔 `get`이 됐다(사용자 2026-11-04).
+- **Swagger 선언 범위**: sketch는 투표 참여·신고 두 곳만 적었으나 `grep`으로 같은 선언을 가진 투표 생성·삭제, 내 정보, 탈퇴, 재발급까지 고쳤다.
+- **테스트**: test-writer가 grep을 쓰지 못해 `ReportSubmitChainTest`, `VoteCommandServiceTest`의 기대값은 전체 `./gradlew test`에서 드러나 내가 고쳤다. 탈퇴 경로에 404를 확인하는 케이스는 새로 추가했다.
+- **접근 제한자 후보**: 계획한 `poll` 값 객체 5개 등은 컴파일에서 막혀 되돌렸다(아래).
+
+### public을 유지한 것과 이유
+
+접근 제한자 점검은 후보를 `grep`으로 뽑고 컴파일로 판정했다. 아래는 `src/main`에서 패키지 안에서만 쓰이거나 쓰이는 곳이 없어 보이지만 `public`이다. 아키텍처 표의 "같은 패키지에서만 쓰면 package-private" 행에 대한 예외이고, 정본 표는 늘리지 않았다.
+
+- **다른 패키지의 테스트가 직접 쓴다**: `VoteReader`(`VoteConcurrencyTest`), `AdminActionWriter`(`AdminReportActionRollbackTest`), `AnonCookieProvider`·`AnonCookie`(여러 도메인의 테스트), `FieldViolation`(`ReportReasonTest`, `DomainValidationReasonTest`). sketch 안전장치대로 테스트를 옮기지 않고 유지했다.
+- **다른 패키지가 체이닝으로 쓴다**: `poll` 도메인 값 객체 `ClosesAt`, `OptionContent`, `PollQuestion`, `Position`, `PublicId`(`poll.getQuestion().value()` 형태).
+- **이슈 #20이 `admin`에서 쓸 행위**: `Poll.restore`.
+- **프레임워크가 만드는 진입점**은 점검에서 제외했다: 컨트롤러, `*WebApiDocs`, 필터·설정, `@ConfigurationProperties`, 응답 DTO, `main`.
+
+### 리뷰
+
+sketch-reviewer r1 FAIL(차단 4)→r2 PASS_WITH_FIXES→r3 PASS_WITH_FIXES(권고 반영), domain-reviewer PASS, code-reviewer PASS_WITH_FIXES(재발급 주석, `PollReader` javadoc을 반영했고 주석만 바뀌어 재리뷰는 생략: 리뷰 후 가독성 수정), fact-verifier r1 PASS_WITH_FIXES→r2 PASS.
+
+### 한계와 후속
+
+- **프런트·쿠키 계약**: 없는 회원이 재발급·`GET /members/me`에서 404가 되면 프런트가 401로 로그인 상태를 판단하는 곳과 `인증.md`의 "401이면 로그아웃을 불러 쿠키를 정리" 계약이 어긋난다. 404일 때도 쿠키는 지워지지 않는다. 실제로는 DB를 직접 지우지 않으면 생기지 않지만, 프런트 처리를 정하는 후속 이슈가 필요하다(PR 본문에 적는다).
+- **401을 필터로 옮기는 안**: 사용자 의견이 있었으나 `인증.md`의 "상태는 서비스가 `validateActive()`로 확인" 결정과 요청별 예외(탈퇴·재발급 통과)를 필터가 알아야 해서 이번 범위 밖이다. 별도로 정한다.
+- **탈퇴 401의 이유**: 설계 문서에서 직접 적은 근거를 찾지 못했다(`sketches/76`의 "탈퇴한 회원은 인증이 안 된다" 한 줄뿐). `인증.md`에 한 줄 적는 후속이 있다.
+- **ArchUnit 가시성 규칙**: 남은 `public`을 잡는 도구가 없다. 이번에는 추가하지 않았다.
+- **테스트 위치**: 위 "다른 패키지의 테스트가 직접 쓰는" 클래스는 테스트를 같은 패키지로 옮기면 `public`을 줄일 수 있다.
+- **슬라이스 테스트**: `MemberMeWebApiTest`에 서비스가 404를 던질 때의 응답을 확인하는 케이스가 없다(서비스 계층 `MemberQueryServiceTest`가 확인한다).
