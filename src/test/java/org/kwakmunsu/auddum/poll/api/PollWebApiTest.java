@@ -8,18 +8,12 @@ import static org.mockito.Mockito.verify;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.kwakmunsu.auddum.WebApiTestSupport;
 import org.kwakmunsu.auddum.poll.application.dto.NewPoll;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
-import org.kwakmunsu.auddum.poll.domain.PollErrorCode;
-import org.kwakmunsu.auddum.support.error.AuddumException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
@@ -86,33 +80,6 @@ class PollWebApiTest extends WebApiTestSupport {
                 """)
             .assertThat()
             .hasStatus(HttpStatus.CREATED);
-    }
-
-    @ParameterizedTest
-    @MethodSource("생성_오류와_상태")
-    void 서비스가_던진_생성_오류는_코드와_맞는_상태로_내린다(PollErrorCode errorCode, HttpStatus status) {
-        given(pollCommandService.createPoll(any(NewPoll.class), eq(1L)))
-            .willThrow(new AuddumException(errorCode));
-
-        mvcTester.post()
-            .uri("/api/v1/polls")
-            .with(loginAs(1L))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(REQUEST_BODY)
-            .assertThat()
-            .hasStatus(status)
-            .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
-            .bodyJson()
-            .hasPathSatisfying("$.code", v -> v.assertThat().isEqualTo(errorCode.name()))
-            .hasPathSatisfying("$.status", v -> v.assertThat().isEqualTo(status.value()))
-            .hasPathSatisfying("$.instance", v -> v.assertThat().isEqualTo("/api/v1/polls"));
-    }
-
-    static Stream<Arguments> 생성_오류와_상태() {
-        return Stream.of(
-            Arguments.of(PollErrorCode.POLL_RATE_LIMITED, HttpStatus.TOO_MANY_REQUESTS),
-            Arguments.of(PollErrorCode.DUPLICATE_POLL, HttpStatus.CONFLICT)
-        );
     }
 
     @Test

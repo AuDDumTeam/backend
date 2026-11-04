@@ -15,12 +15,11 @@ import org.kwakmunsu.auddum.support.stereotype.CommandService;
 public class PollCommandService {
 
     private final PollWriter pollWriter;
-    private final PollValidator pollValidator;
     private final PollReader pollReader;
     private final MemberValidator memberValidator;
 
     /**
-     * 새로운 투표를 생성합니다. 정상 회원만 만들 수 있고(정지 403, 탈퇴·없음 401), 입력 검증, 직전 동일 질문(409), 생성 간격(429) 순서로 판단합니다.
+     * 새로운 투표를 생성합니다. 정상 회원만 만들 수 있고(정지 403, 탈퇴·없음 401), 입력 검증을 거쳐 저장합니다.
      *
      * @param newPoll 새로운 투표 정보
      * @param authorId 투표 작성자 ID
@@ -30,10 +29,7 @@ public class PollCommandService {
         memberValidator.validateActive(authorId);
 
         LocalDateTime now = LocalDateTime.now(TimeConfig.KST);
-        Poll poll = pollWriter.createWithUniquePublicId(newPoll, authorId, now);
-        pollValidator.validateCreatable(poll, now);
-
-        Poll saved = pollWriter.save(poll);
+        Poll saved = pollWriter.create(newPoll, authorId, now);
 
         log.info("[PollCommandService] Poll 생성 완료 - pollId={}, authorId={}", saved.getId(), authorId);
 
