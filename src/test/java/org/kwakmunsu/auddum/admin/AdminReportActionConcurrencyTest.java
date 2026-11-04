@@ -122,7 +122,10 @@ class AdminReportActionConcurrencyTest extends MySqlConcurrencyTestSupport {
             jwtTokenProvider.createAccessToken(adminId, Role.ADMIN, LocalDateTime.now(TimeConfig.KST)));
     }
 
-    private record HttpOutcome(int status, String body) {
+    private record HttpOutcome(
+        int status,
+        String body
+    ) {
 
     }
 

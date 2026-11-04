@@ -31,7 +31,14 @@ final class ApiListRenderer {
     private ApiListRenderer() {
     }
 
-    record Api(String method, String path, String tag, String summary, String success, List<String> errors) {
+    record Api(
+        String method,
+        String path,
+        String tag,
+        String summary,
+        String success,
+        List<String> errors
+    ) {
     }
 
     static String render(Map<String, Object> document, Path featuresDirectory, List<ErrorCode> errorCodes) throws IOException {

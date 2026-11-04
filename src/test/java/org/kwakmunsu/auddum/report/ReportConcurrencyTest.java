@@ -79,7 +79,10 @@ class ReportConcurrencyTest extends MySqlConcurrencyTestSupport {
         return Stream.generate(() -> task).limit(THREADS).toList();
     }
 
-    private record HttpOutcome(int status, String body) {
+    private record HttpOutcome(
+        int status,
+        String body
+    ) {
 
     }
 

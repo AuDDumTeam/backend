@@ -521,7 +521,13 @@ class ReportSubmitChainTest extends DataIntegrationTestSupport {
         return new Cookie(AnonCookieName.VALUE, anonCookieProvider.issue().value());
     }
 
-    private record ReportRow(String status, String reason, String detail, Long reporterMemberId, String reporterAnonId) {
+    private record ReportRow(
+        String status,
+        String reason,
+        String detail,
+        Long reporterMemberId,
+        String reporterAnonId
+    ) {
 
     }
 

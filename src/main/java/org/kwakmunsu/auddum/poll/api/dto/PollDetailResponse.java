@@ -64,7 +64,10 @@ public record PollDetailResponse(
     }
 
     @Builder(access = AccessLevel.PRIVATE)
-    public record OptionResponse(int position, String content) {
+    public record OptionResponse(
+        int position,
+        String content
+    ) {
 
         static OptionResponse from(PollOption option) {
             return OptionResponse.builder()

@@ -11,7 +11,10 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 /**
  * 소셜 로그인이 끝난 회원. 제공자의 정보는 담지 않고 우리 회원 ID와 권한만 가진다.
  */
-public record AuddumOAuth2User(Long memberId, Role role) implements OAuth2User {
+public record AuddumOAuth2User(
+    Long memberId,
+    Role role
+) implements OAuth2User {
 
     @Override
     public Map<String, Object> getAttributes() {

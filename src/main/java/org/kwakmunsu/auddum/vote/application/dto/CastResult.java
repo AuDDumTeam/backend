@@ -11,7 +11,10 @@ import org.kwakmunsu.auddum.poll.application.dto.PollTally;
  * @param result   현재 결과
  */
 @Builder(access = AccessLevel.PRIVATE)
-public record CastResult(int myChoice, PollTally result) {
+public record CastResult(
+    int myChoice,
+    PollTally result
+) {
 
     public static CastResult of(int myChoice, PollTally result) {
         return CastResult.builder()

@@ -135,11 +135,17 @@ public class JwtTokenProvider {
         return Date.from(time.atZone(TimeConfig.KST).toInstant());
     }
 
-    public record AccessClaims(Long memberId, Role role) {
+    public record AccessClaims(
+        Long memberId,
+        Role role
+    ) {
 
     }
 
-    public record RefreshClaims(Long memberId, String jti) {
+    public record RefreshClaims(
+        Long memberId,
+        String jti
+    ) {
 
     }
 

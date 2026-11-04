@@ -62,7 +62,11 @@ class AdminReportActionChainTest extends DataIntegrationTestSupport {
     final EntityManager entityManager;
 
     /** 한 투표(작성자 포함)와 그 투표의 PENDING 신고 하나. */
-    record Scene(Long authorId, Poll poll, Report report) {
+    record Scene(
+        Long authorId,
+        Poll poll,
+        Report report
+    ) {
 
     }
 
