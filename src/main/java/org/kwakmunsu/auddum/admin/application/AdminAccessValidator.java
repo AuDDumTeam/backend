@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class AdminAccessValidator {
+class AdminAccessValidator {
 
     private final MemberReader memberReader;
 

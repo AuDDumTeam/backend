@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  */
 @RequiredArgsConstructor
 @Component
-public class VoterResolver {
+class VoterResolver {
 
     private final AnonIdentityResolver anonIdentityResolver;
 

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 /** 신고 규칙 검증. 서비스가 시키면 규칙을 확인하고 어기면 도메인 오류를 던진다. */
 @RequiredArgsConstructor
 @Component
-public class ReportValidator {
+class ReportValidator {
 
     private final ReportJpaRepository reportRepository;
     private final MemberValidator memberValidator;

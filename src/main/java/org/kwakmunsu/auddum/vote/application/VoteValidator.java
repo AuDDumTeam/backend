@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /** 참여 규칙 검증. 서비스가 시키면 규칙을 확인하고 어기면 도메인 오류를 던진다. */
 @RequiredArgsConstructor
 @Component
-public class VoteValidator {
+class VoteValidator {
 
     private final VoteReader voteReader;
     private final MemberValidator memberValidator;

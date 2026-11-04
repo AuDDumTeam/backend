@@ -12,12 +12,12 @@ public record AnonIdentity(
 ) {
 
     /** 이미 정해진 식별자(유효한 쿠키). 쿠키를 새로 발급하지 않았다. */
-    public static AnonIdentity existing(UUID id) {
+    static AnonIdentity existing(UUID id) {
         return new AnonIdentity(id, null);
     }
 
     /** 새로 발급한 쿠키의 식별자. */
-    public static AnonIdentity issued(AnonCookie cookie) {
+    static AnonIdentity issued(AnonCookie cookie) {
         return new AnonIdentity(cookie.id(), cookie.value());
     }
 

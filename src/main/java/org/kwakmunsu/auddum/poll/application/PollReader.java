@@ -29,7 +29,7 @@ public class PollReader {
      * 열람할 수 있는 투표 한 건을 돌려준다. 숨김·삭제 투표는 작성자와 관리자에게만 보이고, 그 밖에는 없는 투표와 같이 404다.
      * 비회원은 viewerId가 null이다. 관리자는 DB의 role이 ADMIN인 회원이다.
      */
-    public Poll getReadable(String publicId, Long viewerId) {
+    Poll getReadable(String publicId, Long viewerId) {
         return pollRepository.findByPublicId(publicId)
             .filter(poll -> poll.isReadableBy(viewerId, () -> memberReader.isAdmin(viewerId)))
             .orElseThrow(() -> new AuddumException(PollErrorCode.POLL_NOT_FOUND));

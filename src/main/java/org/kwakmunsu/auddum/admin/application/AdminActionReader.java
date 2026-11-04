@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /** 관리자 조치 이력 읽기. 자체 트랜잭션 경계가 없어 부른 서비스의 트랜잭션에 참여한다. */
 @RequiredArgsConstructor
 @Component
-public class AdminActionReader {
+class AdminActionReader {
 
     private final AdminActionJpaRepository adminActionRepository;
 

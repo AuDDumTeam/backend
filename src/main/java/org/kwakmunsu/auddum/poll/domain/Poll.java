@@ -132,7 +132,7 @@ public class Poll extends BaseEntity {
         return status == PollStatus.PUBLIC;
     }
 
-    public boolean isAuthor(Long memberId) {
+    boolean isAuthor(Long memberId) {
         return authorId.equals(memberId);
     }
 

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  */
 @RequiredArgsConstructor
 @Component
-public class VoteParticipator {
+class VoteParticipator {
 
     private final VoteValidator voteValidator;
     private final VoteWriter voteWriter;
