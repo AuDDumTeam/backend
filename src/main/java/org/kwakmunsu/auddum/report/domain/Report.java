@@ -84,7 +84,7 @@ public class Report extends BaseEntity {
         this.handledBy = adminId;
     }
 
-    public boolean isPending() {
+    boolean isPending() {
         return status == ReportStatus.PENDING;
     }
 

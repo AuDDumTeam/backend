@@ -6,7 +6,10 @@ package org.kwakmunsu.auddum.vote.application.dto;
  * @param memberId        로그인한 회원 ID. 비회원이면 null
  * @param anonCookieValue {@code auddum_anon} 쿠키 값. 없으면 null
  */
-public record VoterCredential(Long memberId, String anonCookieValue) {
+public record VoterCredential(
+    Long memberId,
+    String anonCookieValue
+) {
 
     /** 로그인한 회원인가. 회원이면 익명 쿠키는 보지 않는다. */
     public boolean isMember() {

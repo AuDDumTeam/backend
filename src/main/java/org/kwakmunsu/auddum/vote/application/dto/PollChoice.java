@@ -6,6 +6,9 @@ package org.kwakmunsu.auddum.vote.application.dto;
  * @param pollPublicId 투표 공개 ID
  * @param position     고른 선택지 순번
  */
-public record PollChoice(String pollPublicId, int position) {
+public record PollChoice(
+    String pollPublicId,
+    int position
+) {
 
 }

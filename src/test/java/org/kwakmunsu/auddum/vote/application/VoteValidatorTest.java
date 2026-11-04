@@ -41,7 +41,7 @@ class VoteValidatorTest {
     private final Poll poll = VoteFixture.withIds(VoteFixture.openPoll(1L));
     private final Voter voter = Voter.member(MEMBER_ID);
 
-    // ---- validateVoter: 회원 상태 확인 (정지 403, 탈퇴·없음 401, P-05) ----
+    // ---- validateVoter: 회원 상태 확인 (정지 403, 탈퇴 401, 없음 404, P-05) ----
 
     @Test
     void 정상_회원_참여자는_통과한다() {
@@ -72,12 +72,12 @@ class VoteValidatorTest {
     }
 
     @Test
-    void 없는_회원_참여자는_UNAUTHENTICATED다() {
+    void 없는_회원_참여자는_MEMBER_NOT_FOUND다() {
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> voteValidator.validateVoter(voter))
             .isInstanceOf(AuddumException.class)
-            .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
+            .hasMessage(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
     }
 
     @Test

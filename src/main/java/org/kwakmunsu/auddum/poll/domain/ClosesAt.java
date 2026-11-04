@@ -34,7 +34,7 @@ public record ClosesAt(
     /**
      * now가 마감 시각 이상이면 마감이다.
      */
-    public boolean isReachedAt(LocalDateTime now) {
+    boolean isReachedAt(LocalDateTime now) {
         return !now.isBefore(value);
     }
 

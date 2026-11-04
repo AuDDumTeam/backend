@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 /** 신고 규칙 검증. 서비스가 시키면 규칙을 확인하고 어기면 도메인 오류를 던진다. */
 @RequiredArgsConstructor
 @Component
-public class ReportValidator {
+class ReportValidator {
 
     private final ReportJpaRepository reportRepository;
     private final MemberValidator memberValidator;
 
-    /** 회원이면 정상 회원인지 확인한다(정지 403, 탈퇴·없음 401). 비회원은 확인할 것이 없다. */
+    /** 회원이면 정상 회원인지 확인한다(정지 403, 탈퇴 401, 없음 404). 비회원은 확인할 것이 없다. */
     public void validateReporter(Reporter reporter) {
         if (reporter.memberId() != null) {
             memberValidator.validateActive(reporter.memberId());

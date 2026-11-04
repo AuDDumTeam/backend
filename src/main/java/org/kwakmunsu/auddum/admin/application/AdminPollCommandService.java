@@ -27,7 +27,7 @@ public class AdminPollCommandService {
     public void takedown(Long adminId, String pollPublicId, PollTakedown takedown, String reason) {
         adminAccessValidator.validateAdmin(adminId);
 
-        Poll poll = pollReader.find(pollPublicId);
+        Poll poll = pollReader.getByPublicId(pollPublicId);
         poll.validateNotDeleted();
         // 사유 검증(400)을 대상 상태 확인(409·404)보다 먼저 하려고 이력을 먼저 만든다.
         AdminAction history = AdminAction.takedownPoll(adminId, poll.getId(), takedown, reason);

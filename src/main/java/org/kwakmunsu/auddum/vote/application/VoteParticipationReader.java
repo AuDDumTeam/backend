@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  */
 @RequiredArgsConstructor
 @Component
-public class VoteParticipationReader implements ParticipationReader {
+class VoteParticipationReader implements ParticipationReader {
 
     private final VoterResolver voterResolver;
     private final VoteReader voteReader;

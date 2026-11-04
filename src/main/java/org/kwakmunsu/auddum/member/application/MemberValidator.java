@@ -14,9 +14,9 @@ public class MemberValidator {
 
     private final MemberReader memberReader;
 
-    /** 쓰기를 할 수 있는 정상 회원인지 확인한다. 없거나 탈퇴했으면 401, 정지면 403이다. 정지 회원이 할 수 있는 탈퇴·재발급에서는 부르지 않는다. */
+    /** 쓰기를 할 수 있는 정상 회원인지 확인한다. 없으면 404, 탈퇴했으면 401, 정지면 403이다. 정지 회원이 할 수 있는 탈퇴·재발급에서는 부르지 않는다. */
     public void validateActive(Long memberId) {
-        Member member = memberReader.getMember(memberId);
+        Member member = memberReader.get(memberId);
         member.validateActive();
     }
 

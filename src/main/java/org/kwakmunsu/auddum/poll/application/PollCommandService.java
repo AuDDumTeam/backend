@@ -19,7 +19,7 @@ public class PollCommandService {
     private final MemberValidator memberValidator;
 
     /**
-     * 새로운 투표를 생성합니다. 정상 회원만 만들 수 있고(정지 403, 탈퇴·없음 401), 입력 검증을 거쳐 저장합니다.
+     * 새로운 투표를 생성합니다. 정상 회원만 만들 수 있고(정지 403, 탈퇴 401, 없음 404), 입력 검증을 거쳐 저장합니다.
      *
      * @param newPoll 새로운 투표 정보
      * @param authorId 투표 작성자 ID
@@ -37,7 +37,7 @@ public class PollCommandService {
     }
 
     /**
-     * 작성자가 자기 투표를 삭제한다(논리 삭제). 정상 회원만 할 수 있고(정지 403, 탈퇴·없음 401), 회원 상태를 투표 조회보다 먼저 확인한다.
+     * 작성자가 자기 투표를 삭제한다(논리 삭제). 정상 회원만 할 수 있고(정지 403, 탈퇴 401, 없음 404), 회원 상태를 투표 조회보다 먼저 확인한다.
      * 작성자 판정과 404·403 구분은 {@link Poll#deleteByAuthor}가 맡는다.
      *
      * @param memberId 삭제를 요청한 회원 ID
@@ -46,7 +46,7 @@ public class PollCommandService {
     public void deleteByAuthor(Long memberId, String pollPublicId) {
         memberValidator.validateActive(memberId);
 
-        Poll poll = pollReader.find(pollPublicId);
+        Poll poll = pollReader.getByPublicId(pollPublicId);
         poll.deleteByAuthor(memberId);
 
         log.info("[PollCommandService] Poll 삭제 완료 - pollId={}, memberId={}", poll.getId(), memberId);

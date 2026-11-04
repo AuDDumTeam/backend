@@ -36,7 +36,7 @@ public class MemberCommandService {
      * 작성한 투표와 참여 기록은 그대로 둔다(작성자를 응답에 내지 않는 것이 익명화다).
      */
     public void withdraw(Long memberId) {
-        Member member = memberReader.getMember(memberId);
+        Member member = memberReader.get(memberId);
 
         member.withdraw(LocalDateTime.now(TimeConfig.KST));
 

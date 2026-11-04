@@ -6,6 +6,9 @@ package org.kwakmunsu.auddum.poll.application.dto;
  * @param memberId        로그인한 회원 ID. 비회원이면 null
  * @param anonCookieValue 익명 식별 쿠키 값. 없으면 null
  */
-public record Viewer(Long memberId, String anonCookieValue) {
+public record Viewer(
+    Long memberId,
+    String anonCookieValue
+) {
 
 }

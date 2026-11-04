@@ -30,20 +30,20 @@ public class ReportReader {
     private final ReportJpaRepository reportRepository;
 
     /** 신고 한 건. 없으면 404(REPORT_NOT_FOUND)다. */
-    public Report find(Long reportId) {
+    public Report get(Long reportId) {
         return reportRepository.findById(reportId)
             .orElseThrow(() -> new AuddumException(ReportErrorCode.REPORT_NOT_FOUND));
     }
 
     /** 같은 상태의 신고를 접수 순으로 size개 돌려준다. cursorId(마지막으로 본 신고 id)가 없으면 첫 페이지다. */
-    public Slice<Report> findByStatusAfter(ReportStatus status, Long cursorId, int size) {
+    public Slice<Report> findAllByStatusAfter(ReportStatus status, Long cursorId, int size) {
         long afterId = cursorId == null ? 0L : cursorId;
 
         return reportRepository.findByStatusAndIdGreaterThanOrderByIdAsc(status, afterId, PageRequest.ofSize(size));
     }
 
     /** 같은 투표의 다른 신고를 접수 순으로 처음 {@value #OTHER_REPORTS_LIMIT}건까지 돌려준다(처리 상태와 무관). */
-    public List<Report> findOthersOfSamePoll(Report report) {
+    public List<Report> findAllOthersOfSamePoll(Report report) {
         return reportRepository.findByPollIdAndIdNotOrderByIdAsc(
             report.getPollId(),
             report.getId(),

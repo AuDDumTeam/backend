@@ -792,7 +792,10 @@
             "description" : "재발급됨. 본문 없음, Set-Cookie로 전달"
           },
           "401" : {
-            "description" : "UNAUTHENTICATED: 토큰이 없거나 만료·폐기됐거나 재사용으로 감지됨"
+            "description" : "UNAUTHENTICATED: 토큰이 없거나 만료·폐기됐거나 재사용으로 감지됨, 탈퇴한 회원"
+          },
+          "404" : {
+            "description" : "MEMBER_NOT_FOUND: 없는 회원"
           }
         },
         "summary" : "토큰 재발급",
@@ -809,6 +812,9 @@
           },
           "401" : {
             "description" : "UNAUTHENTICATED: 로그인하지 않았거나 이미 탈퇴한 회원"
+          },
+          "404" : {
+            "description" : "MEMBER_NOT_FOUND: 없는 회원"
           }
         },
         "summary" : "회원 탈퇴",
@@ -837,6 +843,16 @@
               }
             },
             "description" : "UNAUTHENTICATED: 로그인하지 않았거나 탈퇴한 회원"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MemberResponse"
+                }
+              }
+            },
+            "description" : "MEMBER_NOT_FOUND: 없는 회원"
           }
         },
         "summary" : "내 정보 조회",
@@ -942,6 +958,16 @@
               }
             },
             "description" : "UNAUTHENTICATED"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "MEMBER_NOT_FOUND: 없는 회원"
           }
         },
         "summary" : "투표 생성",
@@ -973,7 +999,7 @@
             "description" : "FORBIDDEN: 작성자가 아닌 공개 투표, POLL_NOT_DELETABLE: 관리자가 숨긴 투표, MEMBER_SUSPENDED: 정지 회원"
           },
           "404" : {
-            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 삭제되었거나 작성자가 아닌 숨김·삭제된 투표"
+            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 삭제되었거나 작성자가 아닌 숨김·삭제된 투표, MEMBER_NOT_FOUND: 없는 회원"
           }
         },
         "summary" : "투표 삭제",
@@ -1050,13 +1076,13 @@
             "description" : "VALIDATION_FAILED(사유 누락·ETC 상세 누락·길이 초과), MALFORMED_REQUEST(본문 형식 오류·허용되지 않은 사유)"
           },
           "401" : {
-            "description" : "UNAUTHENTICATED: 탈퇴했거나 없는 회원"
+            "description" : "UNAUTHENTICATED: 탈퇴한 회원"
           },
           "403" : {
             "description" : "MEMBER_SUSPENDED"
           },
           "404" : {
-            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 숨김·삭제된 투표"
+            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 숨김·삭제된 투표, MEMBER_NOT_FOUND: 없는 회원"
           },
           "409" : {
             "description" : "REPORT_ALREADY_SUBMITTED: 이미 신고함"
@@ -1119,7 +1145,7 @@
                 }
               }
             },
-            "description" : "UNAUTHENTICATED: 탈퇴했거나 없는 회원"
+            "description" : "UNAUTHENTICATED: 탈퇴한 회원"
           },
           "403" : {
             "content" : {
@@ -1139,7 +1165,7 @@
                 }
               }
             },
-            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 숨김·삭제된 투표"
+            "description" : "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 숨김·삭제된 투표, MEMBER_NOT_FOUND: 없는 회원"
           },
           "409" : {
             "content" : {

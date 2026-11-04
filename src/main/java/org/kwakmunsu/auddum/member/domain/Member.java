@@ -87,15 +87,15 @@ public class Member extends BaseEntity {
         }
     }
 
-    public boolean isActive() {
+    boolean isActive() {
         return status == MemberStatus.ACTIVE;
     }
 
-    public boolean isSuspended() {
+    boolean isSuspended() {
         return status == MemberStatus.SUSPENDED;
     }
 
-    public boolean isWithdrawn() {
+    private boolean isWithdrawn() {
         return status == MemberStatus.WITHDRAWN;
     }
 

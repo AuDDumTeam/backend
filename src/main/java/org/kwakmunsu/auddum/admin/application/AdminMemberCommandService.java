@@ -21,7 +21,7 @@ public class AdminMemberCommandService {
     public void suspend(Long adminId, Long memberId, String reason) {
         adminAccessValidator.validateAdmin(adminId);
 
-        Member member = memberReader.find(memberId);
+        Member member = memberReader.get(memberId);
         // 사유 검증(400)을 대상 상태 확인(409·404)보다 먼저 하려고 이력을 먼저 만든다.
         AdminAction history = AdminAction.suspendMember(adminId, memberId, reason);
 

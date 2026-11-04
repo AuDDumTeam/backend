@@ -41,7 +41,7 @@ public class RefreshTokenService {
     }
 
     /**
-     * 리프레시 토큰으로 새 토큰을 발급하고 이전 토큰을 폐기한다. 토큰이 없거나 무효하면 401이다. 재사용을 감지해 던지는 401에서도 전체 폐기는 커밋되어야 하므로 예외에 롤백하지 않는다.
+     * 리프레시 토큰으로 새 토큰을 발급하고 이전 토큰을 폐기한다. 토큰이 없거나 무효하거나 탈퇴한 회원이면 401, 회원이 없으면 404다. 재사용을 감지해 던지는 401에서도 전체 폐기는 커밋되어야 하므로 예외에 롤백하지 않는다.
      */
     @Transactional(noRollbackFor = AuddumException.class)
     public IssuedTokens reissue(String refreshToken, LocalDateTime now) {
@@ -50,7 +50,7 @@ public class RefreshTokenService {
         RefreshToken stored = refreshTokenReader.findForUpdate(refreshToken)
             .orElseThrow(() -> new AuddumException(DefaultErrorCode.UNAUTHENTICATED));
         replace(stored, now);
-        // 회원이 없어 아래에서 401이 되어도 위의 폐기는 커밋된다(noRollbackFor). 결과가 같아 의도한 동작이다.
+        // 회원이 없어 아래에서 404가 되어도 위의 폐기는 커밋된다(noRollbackFor). 쓸 수 없는 회원의 토큰이 폐기되는 것이라 의도한 동작이다.
 
         Member member = memberReader.getNotWithdrawnMember(stored.getMemberId());
 

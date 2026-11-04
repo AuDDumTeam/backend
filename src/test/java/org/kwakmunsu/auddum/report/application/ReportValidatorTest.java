@@ -24,7 +24,7 @@ import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
 
 /**
  * 신고 검증 단위 테스트. 기준은 features/05-신고하기.md R-REPORT-04·P-05:
- * 정지 회원은 403 MEMBER_SUSPENDED, 탈퇴·없는 회원은 401 UNAUTHENTICATED, 비회원은 회원 조회 없이 통과한다.
+ * 정지 회원은 403 MEMBER_SUSPENDED, 탈퇴 회원은 401 UNAUTHENTICATED, 없는 회원은 404 MEMBER_NOT_FOUND, 비회원은 회원 조회 없이 통과한다.
  * MemberReader는 실제 객체를 쓰고 repository만 목으로 둔다.
  */
 class ReportValidatorTest {
@@ -65,12 +65,12 @@ class ReportValidatorTest {
     }
 
     @Test
-    void 없는_회원_신고자는_UNAUTHENTICATED다() {
+    void 없는_회원_신고자는_MEMBER_NOT_FOUND다() {
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> reportValidator.validateReporter(Reporter.member(MEMBER_ID)))
                 .isInstanceOf(AuddumException.class)
-                .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
+                .hasMessage(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
     }
 
     @Test

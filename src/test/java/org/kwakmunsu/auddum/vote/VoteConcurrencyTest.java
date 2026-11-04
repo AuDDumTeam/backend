@@ -157,7 +157,10 @@ class VoteConcurrencyTest extends MySqlConcurrencyTestSupport {
         assertThat(voteReader.find(poll, Voter.anonymous(new AnonId(anonId.value())))).isPresent();
     }
 
-    private record HttpOutcome(int status, String body) {
+    private record HttpOutcome(
+        int status,
+        String body
+    ) {
 
     }
 

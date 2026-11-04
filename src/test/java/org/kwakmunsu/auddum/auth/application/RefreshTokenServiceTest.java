@@ -17,6 +17,7 @@ import org.kwakmunsu.auddum.IntegrationTestSupport;
 import org.kwakmunsu.auddum.auth.domain.RefreshToken;
 import org.kwakmunsu.auddum.auth.infrastructure.RefreshTokenJpaRepository;
 import org.kwakmunsu.auddum.member.domain.Member;
+import org.kwakmunsu.auddum.member.domain.MemberErrorCode;
 import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.member.domain.MemberStatus;
 import org.kwakmunsu.auddum.member.domain.Role;
@@ -195,14 +196,14 @@ class RefreshTokenServiceTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 회원이_없는_토큰으로_재발급하면_401이다() {
+    void 회원이_없는_토큰으로_재발급하면_404_MEMBER_NOT_FOUND다() {
         var memberId = createMember();
         var token = service.issue(memberId, Role.MEMBER, NOW);
         deleteMemberRowOnly(memberId);
 
         assertThatThrownBy(() -> service.reissue(token.refreshToken(), NOW.plusMinutes(1)))
             .isInstanceOf(AuddumException.class)
-            .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
+            .hasMessage(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
     }
 
     @Test

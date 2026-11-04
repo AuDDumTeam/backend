@@ -19,6 +19,7 @@ public abstract class MemberWithdrawWebApiDocs {
     )
     @ApiResponse(responseCode = "204", description = "탈퇴됨. 액세스·리프레시 쿠키 삭제")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED: 로그인하지 않았거나 이미 탈퇴한 회원")
+    @ApiResponse(responseCode = "404", description = "MEMBER_NOT_FOUND: 없는 회원")
     public abstract ResponseEntity<Void> withdraw(
         @Parameter(hidden = true) Long memberId,
         @Parameter(hidden = true) HttpServletResponse response

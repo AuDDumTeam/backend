@@ -19,6 +19,7 @@ public abstract class MemberWebApiDocs {
     )
     @ApiResponse(responseCode = "200", description = "내 정보")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED: 로그인하지 않았거나 탈퇴한 회원")
+    @ApiResponse(responseCode = "404", description = "MEMBER_NOT_FOUND: 없는 회원")
     public abstract ResponseEntity<MemberResponse> getMyInfo(@Parameter(hidden = true) Long memberId);
 
 }
