@@ -31,6 +31,32 @@ class ReporterTest {
         assertThat(reporter.memberId()).isNull();
     }
 
+    @Test
+    void of는_회원_ID만_주면_회원_신고자를_만든다() {
+        assertThat(Reporter.of(7L, null)).isEqualTo(Reporter.member(7L));
+    }
+
+    @Test
+    void of는_익명_UUID만_주면_익명_신고자를_만든다() {
+        var id = UUID.randomUUID();
+
+        assertThat(Reporter.of(null, id)).isEqualTo(Reporter.anonymous(id));
+    }
+
+    @Test
+    void of는_회원_ID와_UUID를_둘_다_주면_거절한다() {
+        assertThatThrownBy(() -> Reporter.of(7L, UUID.randomUUID()))
+                .isInstanceOf(AuddumException.class)
+                .hasMessage("신고자는 회원 ID와 익명 식별자 중 하나여야 합니다.");
+    }
+
+    @Test
+    void of는_둘_다_비우면_거절한다() {
+        assertThatThrownBy(() -> Reporter.of(null, null))
+                .isInstanceOf(AuddumException.class)
+                .hasMessage("신고자는 회원 ID와 익명 식별자 중 하나여야 합니다.");
+    }
+
     @ParameterizedTest
     @MethodSource("정확히_하나가_아닌_조합")
     void 회원_ID와_익명_식별자는_정확히_하나만_줄_수_있다(Long memberId, UUID anonId) {

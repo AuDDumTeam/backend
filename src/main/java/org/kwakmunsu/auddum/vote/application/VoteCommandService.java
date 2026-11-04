@@ -8,7 +8,7 @@ import org.kwakmunsu.auddum.support.config.TimeConfig;
 import org.kwakmunsu.auddum.support.stereotype.CommandService;
 import org.kwakmunsu.auddum.vote.application.dto.CastResult;
 import org.kwakmunsu.auddum.vote.application.dto.PollChoice;
-import org.kwakmunsu.auddum.vote.application.dto.VoterCredential;
+import org.kwakmunsu.auddum.vote.domain.Voter;
 
 /** 투표 참여. 서비스는 처리 순서만 잇고, 규칙의 실행은 구현 클래스에 시킨다. */
 @RequiredArgsConstructor
@@ -16,20 +16,20 @@ import org.kwakmunsu.auddum.vote.application.dto.VoterCredential;
 public class VoteCommandService {
 
     private final PollReader pollReader;
-    private final VoterResolver voterResolver;
+    private final VoteValidator voteValidator;
     private final VoteParticipator voteParticipator;
 
     /**
-     * 투표에 참여한다. 투표 조회(없거나 형식이 틀리거나 공개가 아니면 404) → 참여자 결정(정지 403, 탈퇴·없음 401)
+     * 투표에 참여한다. 투표 조회(없거나 형식이 틀리거나 공개가 아니면 404) → 참여자 확인(정지 403, 탈퇴·없음 401)
      * → 참여 처리(기존 참여 409, 마감 409, 선택지 400, 저장) 순서다. 마감 여부는 요청을 받은 시각 한 번으로 판단한다.
      *
-     * @param choice     어느 투표의 몇 번 선택지인지
-     * @param credential 참여하려는 사람의 신원 단서(회원 ID, 익명 쿠키)
+     * @param choice 어느 투표의 몇 번 선택지인지
+     * @param voter  참여하려는 사람(회원 또는 익명). 익명 쿠키 해석은 컨트롤러가 이미 했다
      */
-    public CastResult castVote(PollChoice choice, VoterCredential credential) {
+    public CastResult castVote(PollChoice choice, Voter voter) {
         Poll poll = pollReader.getPublic(choice.pollPublicId());
 
-        ResolvedVoter voter = voterResolver.resolve(credential);
+        voteValidator.validateVoter(voter);
 
         return voteParticipator.participate(
             poll,

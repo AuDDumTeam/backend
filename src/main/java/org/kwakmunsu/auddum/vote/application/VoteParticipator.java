@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.vote.application.dto.CastResult;
+import org.kwakmunsu.auddum.vote.domain.Voter;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,11 +23,11 @@ public class VoteParticipator {
      * 이미 참여했으면 선택과 관계없이 409다. 아니면 마감(409), 선택지(400)를 확인한 뒤 저장한다.
      * 같은 참여자의 동시 요청에서 진 쪽도 409다.
      */
-    public CastResult participate(Poll poll, ResolvedVoter resolved, int position, LocalDateTime now) {
-        voteValidator.validateNotParticipated(poll, resolved.voter());
-        voteWriter.cast(poll, resolved.voter(), position, now);
+    public CastResult participate(Poll poll, Voter voter, int position, LocalDateTime now) {
+        voteValidator.validateNotParticipated(poll, voter);
+        voteWriter.cast(poll, voter, position, now);
 
-        return CastResult.of(position, voteReader.tally(poll), resolved.newCookieValue());
+        return CastResult.of(position, voteReader.tally(poll));
     }
 
 }

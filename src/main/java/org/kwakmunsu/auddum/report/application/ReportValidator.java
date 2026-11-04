@@ -1,6 +1,7 @@
 package org.kwakmunsu.auddum.report.application;
 
 import lombok.RequiredArgsConstructor;
+import org.kwakmunsu.auddum.member.application.MemberValidator;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.report.domain.ReportErrorCode;
 import org.kwakmunsu.auddum.report.domain.Reporter;
@@ -14,6 +15,14 @@ import org.springframework.stereotype.Component;
 public class ReportValidator {
 
     private final ReportJpaRepository reportRepository;
+    private final MemberValidator memberValidator;
+
+    /** 회원이면 정상 회원인지 확인한다(정지 403, 탈퇴·없음 401). 비회원은 확인할 것이 없다. */
+    public void validateReporter(Reporter reporter) {
+        if (reporter.memberId() != null) {
+            memberValidator.validateActive(reporter.memberId());
+        }
+    }
 
     /** 이미 신고한 사람이면 409(REPORT_ALREADY_SUBMITTED)다. */
     public void validateNotReported(Poll poll, Reporter reporter) {

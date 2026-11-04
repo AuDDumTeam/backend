@@ -1,10 +1,10 @@
 package org.kwakmunsu.auddum.poll.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.anonymousVoter;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.choice;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.expire;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.member;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.noCredential;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.memberVoter;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.tamperSignature;
 
 import jakarta.servlet.http.Cookie;
@@ -17,6 +17,7 @@ import org.kwakmunsu.auddum.auth.infrastructure.JwtTokenProvider;
 import org.kwakmunsu.auddum.member.domain.Role;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
+import org.kwakmunsu.auddum.support.anon.AnonCookieProvider;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
 import org.kwakmunsu.auddum.support.web.AnonCookieName;
 import org.kwakmunsu.auddum.vote.VoteIntegrationTestSupport;
@@ -38,11 +39,12 @@ class PollDetailChainTest extends VoteIntegrationTestSupport {
     final MockMvcTester mvcTester;
     final JwtTokenProvider jwtTokenProvider;
     final VoteCommandService voteCommandService;
+    final AnonCookieProvider anonCookieProvider;
 
     @Test
     void 쿠키가_없는_비회원은_미참여라_result가_null이고_participantCount를_받으며_Set_Cookie가_없다() {
         var poll = savePoll(saveMember());
-        voteCommandService.castVote(choice(poll, 1), member(saveMember()));
+        voteCommandService.castVote(choice(poll, 1), memberVoter(saveMember()));
 
         var result = mvcTester.get().uri(uri(poll)).exchange();
 
@@ -56,9 +58,10 @@ class PollDetailChainTest extends VoteIntegrationTestSupport {
     @Test
     void 참여_응답으로_받은_익명_쿠키로_조회하면_myChoice와_result를_받는다() {
         var poll = savePoll(saveMember());
-        var cast = voteCommandService.castVote(choice(poll, 2), noCredential());
+        var cookie = anonCookieProvider.issue();
+        voteCommandService.castVote(choice(poll, 2), anonymousVoter(cookie.id()));
 
-        var result = mvcTester.get().uri(uri(poll)).cookie(new Cookie(AnonCookieName.VALUE, cast.newCookieValue())).exchange();
+        var result = mvcTester.get().uri(uri(poll)).cookie(new Cookie(AnonCookieName.VALUE, cookie.value())).exchange();
 
         assertThat(result).hasStatus(200);
         assertThat(result).bodyJson().extractingPath("$.myChoice").isEqualTo(2);
@@ -72,9 +75,10 @@ class PollDetailChainTest extends VoteIntegrationTestSupport {
     @Test
     void 위조_쿠키로_조회하면_200이고_미참여로_보며_Set_Cookie와_투표_기록이_없다() {
         var poll = savePoll(saveMember());
-        var cast = voteCommandService.castVote(choice(poll, 1), noCredential());
+        var cookie = anonCookieProvider.issue();
+        voteCommandService.castVote(choice(poll, 1), anonymousVoter(cookie.id()));
         var votesBefore = voteJpaRepository.count();
-        var forged = tamperSignature(cast.newCookieValue());
+        var forged = tamperSignature(cookie.value());
 
         var result = mvcTester.get().uri(uri(poll)).cookie(new Cookie(AnonCookieName.VALUE, forged)).exchange();
 
@@ -109,7 +113,7 @@ class PollDetailChainTest extends VoteIntegrationTestSupport {
     void 회원_토큰_쿠키로_조회하면_회원_ID로_참여를_판단한다() {
         var memberId = saveMember();
         var poll = savePoll(saveMember());
-        voteCommandService.castVote(choice(poll, 2), member(memberId));
+        voteCommandService.castVote(choice(poll, 2), memberVoter(memberId));
 
         var result = mvcTester.get().uri(uri(poll)).cookie(accessCookie(memberId)).exchange();
 
@@ -122,10 +126,11 @@ class PollDetailChainTest extends VoteIntegrationTestSupport {
     void 로그인한_회원은_익명_쿠키를_보지_않는다() {
         var memberId = saveMember();
         var poll = savePoll(saveMember());
-        var cast = voteCommandService.castVote(choice(poll, 1), noCredential());
+        var cookie = anonCookieProvider.issue();
+        voteCommandService.castVote(choice(poll, 1), anonymousVoter(cookie.id()));
 
         var result = mvcTester.get().uri(uri(poll))
-            .cookie(accessCookie(memberId), new Cookie(AnonCookieName.VALUE, cast.newCookieValue()))
+            .cookie(accessCookie(memberId), new Cookie(AnonCookieName.VALUE, cookie.value()))
             .exchange();
 
         assertThat(result).hasStatus(200);
@@ -137,7 +142,7 @@ class PollDetailChainTest extends VoteIntegrationTestSupport {
     void 마감된_투표는_쿠키가_없는_비회원에게도_result를_내린다() {
         var poll = pollJpaRepository.saveAndFlush(Poll.create(saveMember(), "점심 뭐 먹지?", Category.ETC,
             List.of("국밥", "파스타"), LocalDateTime.now(TimeConfig.KST).plusSeconds(1), LocalDateTime.now(TimeConfig.KST)));
-        voteCommandService.castVote(choice(poll, 1), member(saveMember()));
+        voteCommandService.castVote(choice(poll, 1), memberVoter(saveMember()));
         pollJpaRepository.saveAndFlush(expire(poll));
 
         var result = mvcTester.get().uri(uri(poll)).exchange();

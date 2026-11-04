@@ -2,9 +2,9 @@ package org.kwakmunsu.auddum.vote;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.CREATED_AT;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.anonymous;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.anonymousVoter;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.choice;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.member;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.memberVoter;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.pollClosingInOneHour;
 
 import jakarta.servlet.http.Cookie;
@@ -60,7 +60,7 @@ class VoteConcurrencyTest extends MySqlConcurrencyTestSupport {
         var poll = saveOpenPoll();
         var memberId = saveMember();
 
-        var outcomes = ConcurrentRace.run(repeat(() -> voteCommandService.castVote(choice(poll, 1), member(memberId))));
+        var outcomes = ConcurrentRace.run(repeat(() -> voteCommandService.castVote(choice(poll, 1), memberVoter(memberId))));
 
         assertThat(voteJpaRepository.count()).isEqualTo(1);
         assertThat(voteReader.find(poll, Voter.member(memberId))).isPresent();
@@ -76,7 +76,7 @@ class VoteConcurrencyTest extends MySqlConcurrencyTestSupport {
         List<Callable<CastResult>> tasks = new ArrayList<>();
         for (int index = 0; index < THREADS; index++) {
             var position = index % 2 + 1;
-            tasks.add(() -> voteCommandService.castVote(choice(poll, position), member(memberId)));
+            tasks.add(() -> voteCommandService.castVote(choice(poll, position), memberVoter(memberId)));
         }
 
         var outcomes = ConcurrentRace.run(tasks);
@@ -92,7 +92,7 @@ class VoteConcurrencyTest extends MySqlConcurrencyTestSupport {
         var poll = saveOpenPoll();
         var cookie = anonCookieProvider.issue();
 
-        var outcomes = ConcurrentRace.run(repeat(() -> voteCommandService.castVote(choice(poll, 1), anonymous(cookie.value()))));
+        var outcomes = ConcurrentRace.run(repeat(() -> voteCommandService.castVote(choice(poll, 1), anonymousVoter(cookie.id()))));
 
         assertThat(voteJpaRepository.count()).isEqualTo(1);
         assertThat(outcomes).filteredOn(Outcome::succeeded).hasSize(1);
@@ -121,10 +121,10 @@ class VoteConcurrencyTest extends MySqlConcurrencyTestSupport {
             var position = index % 2 + 1;
             if (index % 2 == 0) {
                 var memberId = saveMember();
-                tasks.add(() -> voteCommandService.castVote(choice(poll, position), member(memberId)));
+                tasks.add(() -> voteCommandService.castVote(choice(poll, position), memberVoter(memberId)));
             } else {
-                var cookieValue = anonCookieProvider.issue().value();
-                tasks.add(() -> voteCommandService.castVote(choice(poll, position), anonymous(cookieValue)));
+                var cookie = anonCookieProvider.issue();
+                tasks.add(() -> voteCommandService.castVote(choice(poll, position), anonymousVoter(cookie.id())));
             }
         }
 

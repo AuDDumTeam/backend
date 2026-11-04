@@ -5,12 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.NOW;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.anonymous;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.anonymousVoter;
 import static org.kwakmunsu.auddum.vote.application.VoteFixture.choice;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.member;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.memberWithCookie;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.noCredential;
-import static org.kwakmunsu.auddum.vote.application.VoteFixture.tamperSignature;
+import static org.kwakmunsu.auddum.vote.application.VoteFixture.memberVoter;
 
 import jakarta.persistence.EntityManager;
 import java.util.UUID;
@@ -20,7 +17,6 @@ import org.kwakmunsu.auddum.member.domain.MemberErrorCode;
 import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.poll.domain.PollErrorCode;
 import org.kwakmunsu.auddum.support.anon.AnonCookieProvider;
-import org.kwakmunsu.auddum.support.anon.AnonCookieProvider.Verification;
 import org.kwakmunsu.auddum.support.error.AuddumException;
 import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
 import org.kwakmunsu.auddum.vote.VoteIntegrationTestSupport;
@@ -53,13 +49,12 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         var result = voteCommandService.castVote(
             choice(poll, 2),
-            member(memberId));
+            memberVoter(memberId));
 
         assertThat(result.myChoice()).isEqualTo(2);
         assertThat(result.result().total()).isEqualTo(3);
         assertThat(result.result().options()).extracting("position", "count")
             .containsExactly(tuple(1, 1L), tuple(2, 2L));
-        assertThat(result.newCookieValue()).isNull();
     }
 
     @Test
@@ -69,7 +64,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         var result = voteCommandService.castVote(
             choice(poll, 3),
-            member(memberId));
+            memberVoter(memberId));
 
         assertThat(result.result().total()).isEqualTo(1);
         assertThat(result.result().options()).extracting("position", "count")
@@ -87,7 +82,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
         var memberId = saveMember();
         var poll = savePoll(VoteFixture.openPoll(saveMember()));
 
-        voteCommandService.castVote(choice(poll, 2), member(memberId));
+        voteCommandService.castVote(choice(poll, 2), memberVoter(memberId));
         entityManager.flush();
         entityManager.clear();
 
@@ -98,104 +93,19 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
         assertThat(saved.get(0).getVoter()).isEqualTo(Voter.member(memberId));
     }
 
-    // ---- 신원 결정 (쿠키 발급) ----
+    // ---- 익명 참여자 (쿠키 해석은 컨트롤러가 하고 서비스는 UUID만 받는다) ----
 
     @Test
-    void 쿠키가_없는_비회원은_새_쿠키를_발급받고_그_UUID로_저장된다() {
+    void 익명_참여는_익명_식별자로_저장된다() {
         var poll = savePoll(VoteFixture.openPoll(saveMember()));
+        var anonId = UUID.randomUUID();
 
-        var result = voteCommandService.castVote(choice(poll, 1), noCredential());
+        voteCommandService.castVote(choice(poll, 1), anonymousVoter(anonId));
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(result.newCookieValue()).isNotBlank();
-        var issued = (Verification.Valid) anonCookieProvider.check(result.newCookieValue());
         assertThat(voteJpaRepository.findAll()).extracting(Vote::getVoter)
-            .containsExactly(Voter.anonymous(new AnonId(issued.id())));
-    }
-
-    @Test
-    void 유효한_쿠키를_가진_비회원은_쿠키를_새로_발급받지_않고_쿠키의_UUID로_저장된다() {
-        var poll = savePoll(VoteFixture.openPoll(saveMember()));
-        var cookie = anonCookieProvider.issue();
-
-        var result = voteCommandService.castVote(
-            choice(poll, 1),
-            anonymous(cookie.value()));
-        entityManager.flush();
-        entityManager.clear();
-
-        assertThat(result.newCookieValue()).isNull();
-        assertThat(voteJpaRepository.findAll()).extracting(Vote::getVoter)
-            .containsExactly(Voter.anonymous(new AnonId(cookie.id())));
-    }
-
-    @Test
-    void 위조된_쿠키는_오류_없이_새로_발급하고_위조된_UUID로는_저장되지_않는다() {
-        var poll = savePoll(VoteFixture.openPoll(saveMember()));
-        var forged = tamperSignature(anonCookieProvider.issue().value());
-
-        var result = voteCommandService.castVote(
-            choice(poll, 1),
-            anonymous(forged));
-        entityManager.flush();
-        entityManager.clear();
-
-        assertThat(anonCookieProvider.check(forged)).isInstanceOf(Verification.SignatureMismatch.class);
-        assertThat(result.newCookieValue()).isNotBlank().isNotEqualTo(forged);
-        var issued = (Verification.Valid) anonCookieProvider.check(result.newCookieValue());
-        assertThat(voteJpaRepository.findAll()).extracting(Vote::getVoter)
-            .containsExactly(Voter.anonymous(new AnonId(issued.id())));
-    }
-
-    @Test
-    void 형식이_깨진_쿠키도_오류_없이_새로_발급한다() {
-        var poll = savePoll(VoteFixture.openPoll(saveMember()));
-
-        var result = voteCommandService.castVote(
-            choice(poll, 1),
-            anonymous("garbage"));
-
-        assertThat(result.newCookieValue()).isNotBlank();
-    }
-
-    @Test
-    void 빈_문자열_쿠키는_쿠키_없음으로_보고_새로_발급한다() {
-        var poll = savePoll(VoteFixture.openPoll(saveMember()));
-
-        var result = voteCommandService.castVote(choice(poll, 1), anonymous(""));
-
-        assertThat(result.newCookieValue()).isNotBlank();
-    }
-
-    @Test
-    void 회원은_익명_쿠키를_무시하고_회원_ID로만_저장한다() {
-        var memberId = saveMember();
-        var poll = savePoll(VoteFixture.openPoll(saveMember()));
-        var cookie = anonCookieProvider.issue();
-
-        var result = voteCommandService.castVote(
-            choice(poll, 1),
-            memberWithCookie(memberId, cookie.value()));
-        entityManager.flush();
-        entityManager.clear();
-
-        assertThat(result.newCookieValue()).isNull();
-        assertThat(voteJpaRepository.findAll()).extracting(Vote::getVoter)
-            .containsExactly(Voter.member(memberId));
-    }
-
-    @Test
-    void 회원이_위조_쿠키를_보내도_새_쿠키를_발급하지_않는다() {
-        var memberId = saveMember();
-        var poll = savePoll(VoteFixture.openPoll(saveMember()));
-        var forged = tamperSignature(anonCookieProvider.issue().value());
-
-        var result = voteCommandService.castVote(
-            choice(poll, 1),
-            memberWithCookie(memberId, forged));
-
-        assertThat(result.newCookieValue()).isNull();
+            .containsExactly(Voter.anonymous(new AnonId(anonId)));
     }
 
     @Test
@@ -206,12 +116,12 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         voteCommandService.castVote(
             choice(poll, 1),
-            member(memberId));
+            memberVoter(memberId));
         voteCommandService.castVote(
             choice(poll, 1),
-            anonymous(cookie.value()));
+            anonymousVoter(cookie.id()));
 
-        var anonId = new AnonId(((Verification.Valid) anonCookieProvider.check(cookie.value())).id());
+        var anonId = new AnonId(cookie.id());
         assertThat(voteJpaRepository.findAll()).extracting(Vote::getVoter)
             .containsExactlyInAnyOrder(Voter.member(memberId), Voter.anonymous(anonId));
     }
@@ -226,7 +136,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 2),
-            member(memberId)))
+            memberVoter(memberId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(VoteErrorCode.ALREADY_VOTED.getMessage());
 
@@ -241,7 +151,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            anonymous(cookie.value())))
+            anonymousVoter(cookie.id())))
             .isInstanceOf(AuddumException.class)
             .hasMessage(VoteErrorCode.ALREADY_VOTED.getMessage());
 
@@ -257,7 +167,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         var result = voteCommandService.castVote(
             choice(poll, 1),
-            member(memberId));
+            memberVoter(memberId));
 
         assertThat(result.myChoice()).isEqualTo(1);
         assertThat(voteJpaRepository.count()).isEqualTo(1);
@@ -270,7 +180,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(memberId)))
+            memberVoter(memberId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_CLOSED.getMessage());
 
@@ -283,7 +193,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatCode(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(saveMember())))
+            memberVoter(saveMember())))
             .doesNotThrowAnyException();
     }
 
@@ -295,14 +205,14 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
     void 없는_투표에는_POLL_NOT_FOUND다() {
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice("abcdefghijkl", 1),
-            member(saveMember())))
+            memberVoter(saveMember())))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
 
     @Test
     void 공개_ID_형식이_틀리면_POLL_NOT_FOUND다() {
-        assertThatThrownBy(() -> voteCommandService.castVote(choice("short", 1), member(saveMember())))
+        assertThatThrownBy(() -> voteCommandService.castVote(choice("short", 1), memberVoter(saveMember())))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
@@ -311,7 +221,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
     void 정지_회원이_형식이_틀린_공개_ID로_보내도_투표_조회가_먼저라_POLL_NOT_FOUND다() {
         var suspendedId = saveSuspendedMember();
 
-        assertThatThrownBy(() -> voteCommandService.castVote(choice("short", 1), member(suspendedId)))
+        assertThatThrownBy(() -> voteCommandService.castVote(choice("short", 1), memberVoter(suspendedId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
@@ -324,7 +234,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(saveMember())))
+            memberVoter(saveMember())))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
@@ -338,7 +248,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(saveMember())))
+            memberVoter(saveMember())))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
@@ -353,7 +263,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(memberId)))
+            memberVoter(memberId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
@@ -367,7 +277,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(authorId)))
+            memberVoter(authorId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
@@ -381,7 +291,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(suspendedId)))
+            memberVoter(suspendedId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(MemberErrorCode.MEMBER_SUSPENDED.getMessage());
 
@@ -397,7 +307,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(memberId)))
+            memberVoter(memberId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(MemberErrorCode.MEMBER_SUSPENDED.getMessage());
     }
@@ -409,7 +319,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(suspendedId)))
+            memberVoter(suspendedId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(MemberErrorCode.MEMBER_SUSPENDED.getMessage());
     }
@@ -420,7 +330,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice("abcdefghijkl", 1),
-            member(suspendedId)))
+            memberVoter(suspendedId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }
@@ -434,7 +344,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(withdrawnId)))
+            memberVoter(withdrawnId)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
     }
@@ -445,7 +355,7 @@ class VoteCommandServiceTest extends VoteIntegrationTestSupport {
 
         assertThatThrownBy(() -> voteCommandService.castVote(
             choice(poll, 1),
-            member(Long.MAX_VALUE)))
+            memberVoter(Long.MAX_VALUE)))
             .isInstanceOf(AuddumException.class)
             .hasMessage(DefaultErrorCode.UNAUTHENTICATED.getMessage());
     }
