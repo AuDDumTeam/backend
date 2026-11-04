@@ -85,3 +85,9 @@
 - 대응: 커밋 직전에 `git diff`로 의도한 변경인지 확인하고 `./gradlew build`를 다시 돌린다. 빈 목록 같은 경계 테스트가 있으면 그것이 방어선이다.
 - 관련: #163
 
+## 문서만 바꾼 뒤 `./gradlew build`는 캐시된 테스트로 통과해서 생성 문서 불일치를 놓친다
+
+- 상황: 정본(기능 페이지의 "사용하는 API" 표)을 고친 뒤 `./gradlew build`가 1초 만에 `BUILD SUCCESSFUL`이었다. `API-목록.md`의 "기능" 칸은 기능 페이지의 API 표에서 만들어지는데, `docs/`는 Gradle 테스트 작업의 입력이 아니라서 테스트가 `UP-TO-DATE`로 건너뛰어졌다. 그대로 PR을 올렸더니 CI에서 `OpenApiDocTest > API_목록이_코드와_같다()`가 실패했다.
+- 대응: 정본이나 기능 페이지의 API 표를 고친 뒤에는 `./gradlew cleanTest build`로 테스트를 다시 돌리고, 필요하면 `DOCS_UPDATE=1 ./gradlew test --tests '*OpenApiDocTest'`로 생성 문서를 다시 만든다. wrap에서 정본을 고친 뒤에는 `UP-TO-DATE`가 아닌 실행을 확인한다.
+- 관련: #163
+

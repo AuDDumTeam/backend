@@ -13,7 +13,7 @@
 | --- | --- | --- | --- | --- |
 | `GET /polls` | 투표 목록 | 200 | `MALFORMED_REQUEST` | [01-둘러보기](../features/01-둘러보기.md) |
 | `POST /polls` | 투표 생성 | 201 | `VALIDATION_FAILED`, `MALFORMED_REQUEST`, `UNAUTHENTICATED`, `MEMBER_NOT_FOUND` | [02-투표-만들기와-삭제](../features/02-투표-만들기와-삭제.md) |
-| `GET /polls/mine` | 내가 올린 투표 목록 | 200 | `MALFORMED_REQUEST`, `UNAUTHENTICATED`, `MEMBER_NOT_FOUND` | - |
+| `GET /polls/mine` | 내가 올린 투표 목록 | 200 | `MALFORMED_REQUEST`, `UNAUTHENTICATED`, `MEMBER_NOT_FOUND` | [01-둘러보기](../features/01-둘러보기.md), [07-로그인과-회원](../features/07-로그인과-회원.md) |
 | `GET /polls/{pollId}` | 투표 상세 | 200 | `POLL_NOT_FOUND` | [01-둘러보기](../features/01-둘러보기.md), [03-참여하기](../features/03-참여하기.md), [04-결과-보기](../features/04-결과-보기.md) |
 | `DELETE /polls/{pollId}` | 투표 삭제 | 204 | `UNAUTHENTICATED`, `FORBIDDEN`, `POLL_NOT_DELETABLE`, `MEMBER_SUSPENDED`, `POLL_NOT_FOUND`, `MEMBER_NOT_FOUND` | [02-투표-만들기와-삭제](../features/02-투표-만들기와-삭제.md) |
 
