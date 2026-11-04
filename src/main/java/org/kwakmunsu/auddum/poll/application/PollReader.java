@@ -15,7 +15,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 /**
- * 투표 읽기. 열람할 수 있는 투표 한 건({@link #getReadable}), 공개된 투표 한 건({@link #getPublic}), 공개 투표 목록을 돌려준다. 다른 도메인(vote, report 등)도 서비스가 아니라 이 클래스로 투표를 읽는다(한 건을 읽는 진입점은 {@code getReadable}과 {@code getPublic}이다).
+ * 투표 읽기. 열람할 수 있는 투표 한 건({@link #getReadable}), 공개된 투표 한 건({@link #getPublic}), 공개 투표 목록을 돌려준다. 다른 도메인(vote, report 등)도 서비스가 아니라 이 클래스로 투표를 읽는다. 다른 도메인에 열린 진입점은 {@code getPublic}(공개 투표)과 {@code getByPublicId}·{@code getById}(노출 상태 무관)이고, {@code getReadable}은 poll 안에서만 쓴다.
  * 자체 트랜잭션 경계가 없어 부른 서비스의 트랜잭션에 참여한다.
  */
 @RequiredArgsConstructor

@@ -16,7 +16,7 @@ public class VoteValidator {
     private final VoteReader voteReader;
     private final MemberValidator memberValidator;
 
-    /** 회원이면 정상 회원인지 확인한다(정지 403, 탈퇴·없음 401). 비회원은 확인할 것이 없다. */
+    /** 회원이면 정상 회원인지 확인한다(정지 403, 탈퇴 401, 없음 404). 비회원은 확인할 것이 없다. */
     public void validateVoter(Voter voter) {
         if (voter.memberId() != null) {
             memberValidator.validateActive(voter.memberId());

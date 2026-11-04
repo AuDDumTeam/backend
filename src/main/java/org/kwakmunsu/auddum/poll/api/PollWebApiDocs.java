@@ -24,6 +24,7 @@ public abstract class PollWebApiDocs {
     @ApiResponse(responseCode = "201", description = "생성됨. 본문은 공개 ID")
     @ApiResponse(responseCode = "400", description = "VALIDATION_FAILED(errors에 위반 필드) 또는 MALFORMED_REQUEST")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED")
+    @ApiResponse(responseCode = "404", description = "MEMBER_NOT_FOUND: 없는 회원")
     public abstract ResponseEntity<String> createPoll(
         @Parameter(hidden = true) Long memberId,
         PollCreateRequest request
@@ -67,7 +68,7 @@ public abstract class PollWebApiDocs {
     @ApiResponse(responseCode = "204", description = "삭제됨")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED")
     @ApiResponse(responseCode = "403", description = "FORBIDDEN: 작성자가 아닌 공개 투표, POLL_NOT_DELETABLE: 관리자가 숨긴 투표, MEMBER_SUSPENDED: 정지 회원")
-    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 삭제되었거나 작성자가 아닌 숨김·삭제된 투표")
+    @ApiResponse(responseCode = "404", description = "POLL_NOT_FOUND: 없거나 형식이 틀린 공개 ID, 삭제되었거나 작성자가 아닌 숨김·삭제된 투표, MEMBER_NOT_FOUND: 없는 회원")
     public abstract ResponseEntity<Void> deletePoll(
         @Parameter(hidden = true) Long memberId,
         @Parameter(description = "투표 공개 ID(12자 영숫자)", example = "aB3dE5fG7hJk") String pollId

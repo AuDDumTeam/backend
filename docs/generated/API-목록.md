@@ -12,35 +12,35 @@
 | API | 하는 일 | 성공 | 오류 | 기능 |
 | --- | --- | --- | --- | --- |
 | `GET /polls` | 투표 목록 | 200 | `MALFORMED_REQUEST` | [01-둘러보기](../features/01-둘러보기.md) |
-| `POST /polls` | 투표 생성 | 201 | `VALIDATION_FAILED`, `MALFORMED_REQUEST`, `UNAUTHENTICATED` | [02-투표-만들기와-삭제](../features/02-투표-만들기와-삭제.md) |
+| `POST /polls` | 투표 생성 | 201 | `VALIDATION_FAILED`, `MALFORMED_REQUEST`, `UNAUTHENTICATED`, `MEMBER_NOT_FOUND` | [02-투표-만들기와-삭제](../features/02-투표-만들기와-삭제.md) |
 | `GET /polls/{pollId}` | 투표 상세 | 200 | `POLL_NOT_FOUND` | [01-둘러보기](../features/01-둘러보기.md), [03-참여하기](../features/03-참여하기.md), [04-결과-보기](../features/04-결과-보기.md) |
-| `DELETE /polls/{pollId}` | 투표 삭제 | 204 | `UNAUTHENTICATED`, `FORBIDDEN`, `POLL_NOT_DELETABLE`, `MEMBER_SUSPENDED`, `POLL_NOT_FOUND` | [02-투표-만들기와-삭제](../features/02-투표-만들기와-삭제.md) |
+| `DELETE /polls/{pollId}` | 투표 삭제 | 204 | `UNAUTHENTICATED`, `FORBIDDEN`, `POLL_NOT_DELETABLE`, `MEMBER_SUSPENDED`, `POLL_NOT_FOUND`, `MEMBER_NOT_FOUND` | [02-투표-만들기와-삭제](../features/02-투표-만들기와-삭제.md) |
 
 ## 참여
 
 | API | 하는 일 | 성공 | 오류 | 기능 |
 | --- | --- | --- | --- | --- |
-| `POST /polls/{pollId}/votes` | 투표 참여 | 201 | `VALIDATION_FAILED`, `MALFORMED_REQUEST`, `INVALID_OPTION`, `UNAUTHENTICATED`, `MEMBER_SUSPENDED`, `POLL_NOT_FOUND`, `ALREADY_VOTED`, `POLL_CLOSED` | [03-참여하기](../features/03-참여하기.md), [04-결과-보기](../features/04-결과-보기.md) |
+| `POST /polls/{pollId}/votes` | 투표 참여 | 201 | `VALIDATION_FAILED`, `MALFORMED_REQUEST`, `INVALID_OPTION`, `UNAUTHENTICATED`, `MEMBER_SUSPENDED`, `POLL_NOT_FOUND`, `MEMBER_NOT_FOUND`, `ALREADY_VOTED`, `POLL_CLOSED` | [03-참여하기](../features/03-참여하기.md), [04-결과-보기](../features/04-결과-보기.md) |
 
 ## 신고
 
 | API | 하는 일 | 성공 | 오류 | 기능 |
 | --- | --- | --- | --- | --- |
-| `POST /polls/{pollId}/reports` | 투표 신고 | 201 | `VALIDATION_FAILED`, `MALFORMED_REQUEST`, `UNAUTHENTICATED`, `MEMBER_SUSPENDED`, `POLL_NOT_FOUND`, `REPORT_ALREADY_SUBMITTED` | [05-신고하기](../features/05-신고하기.md) |
+| `POST /polls/{pollId}/reports` | 투표 신고 | 201 | `VALIDATION_FAILED`, `MALFORMED_REQUEST`, `UNAUTHENTICATED`, `MEMBER_SUSPENDED`, `POLL_NOT_FOUND`, `MEMBER_NOT_FOUND`, `REPORT_ALREADY_SUBMITTED` | [05-신고하기](../features/05-신고하기.md) |
 
 ## 회원
 
 | API | 하는 일 | 성공 | 오류 | 기능 |
 | --- | --- | --- | --- | --- |
-| `GET /members/me` | 내 정보 조회 | 200 | `UNAUTHENTICATED` | [07-로그인과-회원](../features/07-로그인과-회원.md) |
-| `DELETE /members/me` | 회원 탈퇴 | 204 | `UNAUTHENTICATED` | [07-로그인과-회원](../features/07-로그인과-회원.md) |
+| `GET /members/me` | 내 정보 조회 | 200 | `UNAUTHENTICATED`, `MEMBER_NOT_FOUND` | [07-로그인과-회원](../features/07-로그인과-회원.md) |
+| `DELETE /members/me` | 회원 탈퇴 | 204 | `UNAUTHENTICATED`, `MEMBER_NOT_FOUND` | [07-로그인과-회원](../features/07-로그인과-회원.md) |
 
 ## 인증
 
 | API | 하는 일 | 성공 | 오류 | 기능 |
 | --- | --- | --- | --- | --- |
 | `POST /auth/logout` | 로그아웃 | 204 | - | [07-로그인과-회원](../features/07-로그인과-회원.md) |
-| `POST /auth/refresh` | 토큰 재발급 | 204 | `UNAUTHENTICATED` | [07-로그인과-회원](../features/07-로그인과-회원.md) |
+| `POST /auth/refresh` | 토큰 재발급 | 204 | `UNAUTHENTICATED`, `MEMBER_NOT_FOUND` | [07-로그인과-회원](../features/07-로그인과-회원.md) |
 
 ## 관리자 투표
 

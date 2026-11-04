@@ -17,7 +17,7 @@ public class ReportCommandService {
     private final ReportWriter reportWriter;
 
     /**
-     * 투표를 신고한다. 공개 투표 조회(없거나 형식이 틀리거나 숨김·삭제면 404) → 신고자 확인(정지 403, 탈퇴·없음 401)
+     * 투표를 신고한다. 공개 투표 조회(없거나 형식이 틀리거나 숨김·삭제면 404) → 신고자 확인(정지 403, 탈퇴 401, 없음 404)
      * → 중복 확인(409) → 저장 순서다. 마감된 투표도 신고할 수 있고, 투표의 노출 상태는 바꾸지 않는다.
      *
      * @param pollPublicId 신고할 투표의 공개 ID

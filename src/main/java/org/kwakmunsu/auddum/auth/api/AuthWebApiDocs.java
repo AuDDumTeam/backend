@@ -19,7 +19,8 @@ public abstract class AuthWebApiDocs {
             + "폐기된 토큰이 10초를 넘겨 다시 오면 재사용으로 보고 그 회원의 모든 기기를 로그아웃시킨다."
     )
     @ApiResponse(responseCode = "204", description = "재발급됨. 본문 없음, Set-Cookie로 전달")
-    @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED: 토큰이 없거나 만료·폐기됐거나 재사용으로 감지됨")
+    @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED: 토큰이 없거나 만료·폐기됐거나 재사용으로 감지됨, 탈퇴한 회원")
+    @ApiResponse(responseCode = "404", description = "MEMBER_NOT_FOUND: 없는 회원")
     public abstract ResponseEntity<Void> refresh(
         @Parameter(hidden = true) String refreshToken,
         @Parameter(hidden = true) HttpServletResponse response
