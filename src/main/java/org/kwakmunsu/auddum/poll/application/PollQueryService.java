@@ -39,12 +39,12 @@ public class PollQueryService {
     }
 
     /**
-     * 공개 투표 목록에 참여 수를 붙인다. 목록 조회는 {@link PollReader#findPublicOlderThan}과 같고, 그 페이지의 투표들을 한 번에 집계한다.
+     * 공개 투표 목록에 참여 수를 붙인다. 목록 조회는 {@link PollReader#findAllPublicOlderThan}과 같고, 그 페이지의 투표들을 한 번에 집계한다.
      * 결과 공개 규칙과 무관하게 전체 참여 수는 항상 내려준다.
      * category가 null이면 모든 카테고리다.
      */
     public Slice<PollSummary> getPollSummaries(Long cursorId, Category category, int size) {
-        Slice<Poll> polls = pollReader.findPublicOlderThan(cursorId, category, size);
+        Slice<Poll> polls = pollReader.findAllPublicOlderThan(cursorId, category, size);
 
         List<Long> pollIds = polls.getContent()
             .stream()

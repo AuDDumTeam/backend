@@ -16,7 +16,7 @@ public class AdminActionReader {
     private final AdminActionJpaRepository adminActionRepository;
 
     /** 신고 상세에 보일 조치를 기록 순으로 돌려준다: 이 신고의 기각 이력과 대상 투표에 한 숨김·삭제 이력이다. */
-    public List<AdminAction> findByReport(Report report) {
+    public List<AdminAction> findAllByReport(Report report) {
         return adminActionRepository.findForReport(
             report.getId(),
             report.getPollId(),

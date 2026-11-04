@@ -57,7 +57,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         entityManager.flush();
         entityManager.clear();
 
-        var slice = pollReader.findPublicOlderThan(null, null, 20);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).extracting(Poll::getId).containsExactly(publicPoll.getId());
     }
@@ -100,7 +100,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         closePoll(closedPoll.getId());
         var openPoll = savePoll("진행 중 투표");
 
-        var slice = pollReader.findPublicOlderThan(null, null, 20);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).extracting(Poll::getId).containsExactly(openPoll.getId(), closedPoll.getId());
         assertThat(slice.getContent().get(1).isClosed(LocalDateTime.now(TimeConfig.KST))).isTrue();
@@ -112,7 +112,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var second = savePoll("둘째");
         var third = savePoll("셋째");
 
-        var slice = pollReader.findPublicOlderThan(null, null, 20);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).extracting(Poll::getId)
             .containsExactly(third.getId(), second.getId(), first.getId());
@@ -124,14 +124,14 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var pastCreatedAt = LocalDateTime.of(2026, 10, 12, 13, 0);
         changeCreatedAt(poll.getId(), pastCreatedAt);
 
-        var slice = pollReader.findPublicOlderThan(null, null, 20);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent().getFirst().getCreatedAt()).isEqualTo(pastCreatedAt);
     }
 
     @Test
     void 투표가_없으면_빈_목록이고_다음_페이지가_없다() {
-        var slice = pollReader.findPublicOlderThan(null, null, 20);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).isEmpty();
         assertThat(slice.hasNext()).isFalse();
@@ -141,7 +141,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void size만큼_내려주고_더_있으면_hasNext다() {
         savePoll(21);
 
-        var slice = pollReader.findPublicOlderThan(null, null, 20);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 20);
 
         assertThat(slice.getContent()).hasSize(20);
         assertThat(slice.hasNext()).isTrue();
@@ -151,7 +151,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void size가_50이면_50개를_내려준다() {
         savePoll(51);
 
-        var slice = pollReader.findPublicOlderThan(null, null, 50);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 50);
 
         assertThat(slice.getContent()).hasSize(50);
         assertThat(slice.hasNext()).isTrue();
@@ -161,7 +161,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void size가_1이면_한_개와_hasNext를_내려준다() {
         savePoll(3);
 
-        var slice = pollReader.findPublicOlderThan(null, null, 1);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 1);
 
         assertThat(slice.getContent()).hasSize(1);
         assertThat(slice.hasNext()).isTrue();
@@ -171,7 +171,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void 남은_개수가_size와_같으면_hasNext가_아니다() {
         savePoll(2);
 
-        var slice = pollReader.findPublicOlderThan(null, null, 2);
+        var slice = pollReader.findAllPublicOlderThan(null, null, 2);
 
         assertThat(slice.getContent()).hasSize(2);
         assertThat(slice.hasNext()).isFalse();
@@ -182,9 +182,9 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var saved = savePoll(5);
         var newestFirstIds = new ArrayList<>(saved.reversed().stream().map(Poll::getId).toList());
 
-        var firstPage = pollReader.findPublicOlderThan(null, null, 2);
-        var secondPage = pollReader.findPublicOlderThan(firstPage.getContent().getLast().getId(), null, 2);
-        var thirdPage = pollReader.findPublicOlderThan(secondPage.getContent().getLast().getId(), null, 2);
+        var firstPage = pollReader.findAllPublicOlderThan(null, null, 2);
+        var secondPage = pollReader.findAllPublicOlderThan(firstPage.getContent().getLast().getId(), null, 2);
+        var thirdPage = pollReader.findAllPublicOlderThan(secondPage.getContent().getLast().getId(), null, 2);
 
         assertThat(firstPage.getContent()).extracting(Poll::getId).containsExactlyElementsOf(newestFirstIds.subList(0, 2));
         assertThat(secondPage.getContent()).extracting(Poll::getId).containsExactlyElementsOf(newestFirstIds.subList(2, 4));
@@ -199,12 +199,12 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var first = savePoll("첫째");
         var second = savePoll("둘째");
         var third = savePoll("셋째");
-        var firstPage = pollReader.findPublicOlderThan(null, null, 1);
+        var firstPage = pollReader.findAllPublicOlderThan(null, null, 1);
         second.hide();
         entityManager.flush();
         entityManager.clear();
 
-        var secondPage = pollReader.findPublicOlderThan(firstPage.getContent().getLast().getId(), null, 1);
+        var secondPage = pollReader.findAllPublicOlderThan(firstPage.getContent().getLast().getId(), null, 1);
 
         assertThat(firstPage.getContent()).extracting(Poll::getId).containsExactly(third.getId());
         assertThat(secondPage.getContent()).extracting(Poll::getId).containsExactly(first.getId());
@@ -252,7 +252,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         entityManager.flush();
         entityManager.clear();
 
-        var slice = pollReader.findPublicOlderThan(null, Category.SOME, 20);
+        var slice = pollReader.findAllPublicOlderThan(null, Category.SOME, 20);
 
         assertThat(slice.getContent()).extracting(Poll::getId).containsExactly(publicPoll.getId());
     }
@@ -271,9 +271,9 @@ class PollQueryServiceTest extends IntegrationTestSupport {
             .map(Poll::getId)
             .toList();
 
-        var firstPage = pollReader.findPublicOlderThan(null, Category.SOME, 2);
-        var secondPage = pollReader.findPublicOlderThan(firstPage.getContent().getLast().getId(), Category.SOME, 2);
-        var thirdPage = pollReader.findPublicOlderThan(secondPage.getContent().getLast().getId(), Category.SOME, 2);
+        var firstPage = pollReader.findAllPublicOlderThan(null, Category.SOME, 2);
+        var secondPage = pollReader.findAllPublicOlderThan(firstPage.getContent().getLast().getId(), Category.SOME, 2);
+        var thirdPage = pollReader.findAllPublicOlderThan(secondPage.getContent().getLast().getId(), Category.SOME, 2);
 
         assertThat(firstPage.getContent()).extracting(Poll::getId).containsExactlyElementsOf(someIdsNewestFirst.subList(0, 2));
         assertThat(secondPage.getContent()).extracting(Poll::getId).containsExactlyElementsOf(someIdsNewestFirst.subList(2, 4));
@@ -494,7 +494,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     @ParameterizedTest
     @MethodSource("malformedPublicIds")
     void 형식이_틀린_공개_ID는_find에서_404_POLL_NOT_FOUND다(String malformed) {
-        assertThatThrownBy(() -> pollReader.find(malformed))
+        assertThatThrownBy(() -> pollReader.getByPublicId(malformed))
             .isInstanceOf(AuddumException.class)
             .hasMessage(PollErrorCode.POLL_NOT_FOUND.getMessage());
     }

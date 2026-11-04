@@ -46,7 +46,7 @@ public class PollCommandService {
     public void deleteByAuthor(Long memberId, String pollPublicId) {
         memberValidator.validateActive(memberId);
 
-        Poll poll = pollReader.find(pollPublicId);
+        Poll poll = pollReader.getByPublicId(pollPublicId);
         poll.deleteByAuthor(memberId);
 
         log.info("[PollCommandService] Poll 삭제 완료 - pollId={}, memberId={}", poll.getId(), memberId);

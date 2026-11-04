@@ -29,7 +29,7 @@ public class AdminReportQueryService {
     public Slice<AdminReportSummary> getReports(Long adminId, ReportStatus status, Long cursorId, int size) {
         adminAccessValidator.validateAdmin(adminId);
 
-        Slice<Report> reports = reportReader.findByStatusAfter(status, cursorId, size);
+        Slice<Report> reports = reportReader.findAllByStatusAfter(status, cursorId, size);
 
         List<Long> pollIds = reports.getContent().stream()
             .map(Report::getPollId)
@@ -51,14 +51,14 @@ public class AdminReportQueryService {
     public AdminReportDetail getReportDetail(Long adminId, Long reportId) {
         adminAccessValidator.validateAdmin(adminId);
 
-        Report report = reportReader.find(reportId);
-        Poll poll = pollReader.find(report.getPollId());
+        Report report = reportReader.get(reportId);
+        Poll poll = pollReader.getById(report.getPollId());
 
         return new AdminReportDetail(
             report,
             poll,
-            reportReader.findOthersOfSamePoll(report),
-            adminActionReader.findByReport(report)
+            reportReader.findAllOthersOfSamePoll(report),
+            adminActionReader.findAllByReport(report)
         );
     }
 

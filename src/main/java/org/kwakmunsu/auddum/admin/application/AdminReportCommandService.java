@@ -23,7 +23,7 @@ public class AdminReportCommandService {
     public void dismiss(Long adminId, Long reportId, String reason) {
         adminAccessValidator.validateAdmin(adminId);
 
-        Report report = reportReader.find(reportId);
+        Report report = reportReader.get(reportId);
         // 사유 검증(400)을 대상 상태 확인(409·404)보다 먼저 하려고 이력을 먼저 만든다.
         AdminAction history = AdminAction.dismissReport(adminId, report.getPollId(), reportId, reason);
 

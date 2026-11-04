@@ -46,13 +46,13 @@ public class PollReader {
     }
 
     /** 노출 상태와 상관없이 공개 ID로 투표 한 건을 돌려준다. 형식이 틀리거나 없으면 404다. 관리자 숨김·삭제처럼 노출 상태를 직접 따지는 곳이 쓴다. */
-    public Poll find(String publicId) {
+    public Poll getByPublicId(String publicId) {
         return pollRepository.findByPublicId(publicId)
             .orElseThrow(() -> new AuddumException(PollErrorCode.POLL_NOT_FOUND));
     }
 
     /** 노출 상태와 상관없이 내부 id로 투표 한 건을 돌려준다. 관리자 화면처럼 숨김·삭제 투표도 봐야 하는 곳이 쓴다. 없으면 404다. */
-    public Poll find(Long id) {
+    public Poll getById(Long id) {
         return pollRepository.findById(id)
             .orElseThrow(() -> new AuddumException(PollErrorCode.POLL_NOT_FOUND));
     }
@@ -63,7 +63,7 @@ public class PollReader {
     }
 
     /** 공개 투표를 최신순으로 size개 돌려준다. cursorId(마지막으로 본 내부 id)가 없으면 첫 페이지이고, category가 null이면 모든 카테고리다. */
-    Slice<Poll> findPublicOlderThan(Long cursorId, Category category, int size) {
+    Slice<Poll> findAllPublicOlderThan(Long cursorId, Category category, int size) {
         long beforeId = cursorId == null ? Long.MAX_VALUE : cursorId;
         PageRequest pageable = PageRequest.ofSize(size);
 
