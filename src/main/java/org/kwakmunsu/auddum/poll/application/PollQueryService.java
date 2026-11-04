@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.kwakmunsu.auddum.member.application.MemberValidator;
+import org.kwakmunsu.auddum.poll.application.dto.CursorPaging;
+import org.kwakmunsu.auddum.poll.application.dto.MyPollPage;
 import org.kwakmunsu.auddum.poll.application.dto.Participation;
 import org.kwakmunsu.auddum.poll.application.dto.PollDetail;
 import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Slice;
 @QueryService
 public class PollQueryService {
 
+    private final MemberValidator memberValidator;
     private final PollReader pollReader;
     private final ParticipationReader participationReader;
 
@@ -54,6 +58,26 @@ public class PollQueryService {
         Map<Long, Long> counts = participationReader.countByPollIds(pollIds);
 
         return polls.map(poll -> PollSummary.of(poll, counts.get(poll.getId())));
+    }
+
+    /**
+     * 내가 올린 투표 목록. 공개·숨김 투표를 최신순으로 내리고(삭제 투표는 뺀다) 전체 개수를 함께 준다.
+     * 읽기라서 정지 회원도 볼 수 있다. 없는 회원은 404, 탈퇴한 회원은 401이다.
+     */
+    public MyPollPage getMyPolls(Long memberId, CursorPaging paging) {
+        memberValidator.validateNotWithdrawn(memberId);
+
+        Slice<Poll> polls = pollReader.findAllByAuthorOlderThan(memberId, paging.cursorId(), paging.size());
+
+        Map<Long, Long> counts = participationReader.countByPollIds(polls.getContent()
+            .stream()
+            .map(Poll::getId)
+            .toList());
+
+        return MyPollPage.builder()
+            .summaries(polls.map(poll -> PollSummary.of(poll, counts.get(poll.getId()))))
+            .totalCount(pollReader.countByAuthor(memberId))
+            .build();
     }
 
 }

@@ -1,5 +1,6 @@
 package org.kwakmunsu.auddum.poll.infrastructure;
 
+import java.util.Collection;
 import java.util.Optional;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
@@ -40,5 +41,21 @@ public interface PollJpaRepository extends JpaRepository<Poll, Long> {
         @Param("id") Long id,
         Pageable pageable
     );
+
+    /**
+     * 작성자의 투표 목록 조회. 주어진 노출 상태의 투표 중 id가 주어진 값보다 작은(더 오래된) 것을 최신순으로 가져온다. 첫 페이지는 Long.MAX_VALUE를 넘긴다.
+     */
+    @Query("select p from Poll p"
+        + " where p.authorId = :authorId and p.status in :statuses and p.id < :id"
+        + " order by p.id desc"
+    )
+    Slice<Poll> findByAuthorOlderThan(
+        @Param("authorId") Long authorId,
+        @Param("statuses") Collection<PollStatus> statuses,
+        @Param("id") Long id,
+        Pageable pageable
+    );
+
+    long countByAuthorIdAndStatusIn(Long authorId, Collection<PollStatus> statuses);
 
 }

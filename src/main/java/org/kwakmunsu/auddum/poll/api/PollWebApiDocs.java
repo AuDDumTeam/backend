@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.kwakmunsu.auddum.poll.api.dto.MyPollListResponse;
 import org.kwakmunsu.auddum.poll.api.dto.PollCreateRequest;
 import org.kwakmunsu.auddum.poll.api.dto.PollDetailResponse;
 import org.kwakmunsu.auddum.poll.api.dto.PollListResponse;
@@ -45,6 +46,22 @@ public abstract class PollWebApiDocs {
                 + "SOME, BLIND_DATE, CONTACT, IN_RELATIONSHIP, BREAKUP, LOVE_VALUES, ETC 중 하나만 줄 수 있다(한 번에 하나). "
                 + "그 밖의 값은 400이다"
         ) Category category
+    );
+
+    @Operation(
+        summary = "내가 올린 투표 목록",
+        description = "로그인한 회원이 올린 공개(PUBLIC)·숨김(HIDDEN) 투표를 최신순으로 내린다. 삭제된 투표는 나오지 않는다. 각 항목에 노출 상태(status)와 전체 참여 수(participantCount)를 담고, "
+            + "응답에 목록에 나올 수 있는 전체 개수(totalCount)를 함께 준다(cursor와 size와 무관). cursor는 이전 응답의 nextCursor를 그대로 넘기는 불투명한 값이다. "
+            + "정지 회원도 볼 수 있다. category 같은 다른 쿼리 파라미터는 받지 않고 무시한다."
+    )
+    @ApiResponse(responseCode = "200", description = "목록. 올린 투표가 없으면 빈 items와 totalCount 0")
+    @ApiResponse(responseCode = "400", description = "MALFORMED_REQUEST: cursor 형식 오류, size가 숫자가 아님")
+    @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED: 로그인하지 않았거나 탈퇴한 회원")
+    @ApiResponse(responseCode = "404", description = "MEMBER_NOT_FOUND: 없는 회원")
+    public abstract ResponseEntity<MyPollListResponse> getMyPolls(
+        @Parameter(hidden = true) Long memberId,
+        @Parameter(description = "이전 응답의 nextCursor. 없으면 첫 페이지") String cursor,
+        @Parameter(description = "한 페이지 개수. 기본 20, 1보다 작으면 1, 50을 넘으면 50으로 보정") Integer size
     );
 
     @Operation(

@@ -11,9 +11,16 @@ import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
  * 목록 커서. 마지막으로 본 투표의 내부 id를 {@code {"id":123}}로 만들어 URL-safe base64로 감싼 불투명 문자열이다.
  * 바깥에서는 해석하지 않는 값이라 형식이 틀리면 MALFORMED_REQUEST다.
  */
-record PollCursor(long id) {
+public record PollCursor(long id) {
 
     private static final Pattern PAYLOAD = Pattern.compile("\\{\"id\":(\\d{1,18})}");
+
+    /** 커서가 가리키는 내부 id. 커서가 없거나 비어 있으면 첫 페이지이므로 null이고, 형식이 틀리면 MALFORMED_REQUEST다. */
+    public static Long idOf(String cursor) {
+        PollCursor decoded = from(cursor);
+
+        return decoded == null ? null : decoded.id();
+    }
 
     /** 커서가 없거나 비어 있으면 첫 페이지이므로 null이다. */
     static PollCursor from(String cursor) {
