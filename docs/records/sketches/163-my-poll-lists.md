@@ -2,7 +2,7 @@
 issue: 163
 sources: [이슈 #163, docs/features/01-둘러보기.md, docs/features/03-참여하기.md, docs/features/07-로그인과-회원.md, docs/ERD.md, docs/engineering/아키텍처.md, docs/engineering/설계-결정.md]
 features: [01-둘러보기, 03-참여하기, 07-로그인과-회원]
-ids: [P-01, P-05, P-07, P-22, R-POLL-18, R-MEMBER-11, UC-18]
+ids: [P-01, P-05, P-07, P-22, R-POLL-18, R-MEMBER-11, UC-18, UC-19]
 decisions: []
 status: 완료
 ---
@@ -25,19 +25,19 @@ status: 완료
 | 규칙 | 어긋나면 | 근거·테스트 |
 |---|---|---|
 | 로그인한 회원은 `GET /polls/mine`으로 자기가 올린 투표 목록을 본다. 작성자가 본인인 공개·숨김 투표가 투표 id 내림차순(최신순)으로 나오고(삭제 투표는 제외), 항목에 `status`(PUBLIC, HIDDEN)가 있다. | 비로그인 401 | 이슈 #163 · 사용자 2026-11-04(Q1-B, Q2-A, Q6) |
-| 로그인한 회원은 `GET /polls/voted`로 자기가 참여한 투표 목록을 본다. 본인(회원) 참여 기록의 공개 투표만 나오고, 참여 순서의 역순(최근에 참여한 것 먼저)이다. 참여 순서는 `vote.id`이고(참여 기록은 수정하지 않아 참여 시각 순서와 같다) 같은 시각의 동률도 이것으로 푼다. 숨김·삭제 투표는 나오지 않는다. 항목에 추가 필드는 없다. | 비로그인 401 | 이슈 #163, P-01 · 사용자 2026-11-04(Q1 voted, Q2-A, Q3-B, Q6) |
+| 로그인한 회원은 `GET /polls/voted`로 자기가 참여한 투표 목록을 본다. 본인(회원) 참여 기록의 공개 투표만 나오고, 참여 순서의 역순(최근에 참여한 것 먼저)이다. 참여 순서는 `vote.id`이고(참여 기록은 수정하지 않아 참여 시각 순서와 같다) 같은 시각의 동률도 이것으로 푼다. 숨김·삭제 투표는 나오지 않는다. 항목에 참여 수(`participantCount`)는 없다(질문, 카테고리, 마감 여부, 마감 시각, 생성 시각). | 비로그인 401 | 이슈 #163, P-01 · 사용자 2026-11-04(Q1 voted, Q2-A, Q3-B, Q6) |
 | 두 목록 모두 응답에 `totalCount`를 담는다. 그 목록에 나올 수 있는 전체 개수이고 커서·페이지와 무관하게 요청마다 같다(올린 목록은 공개+숨김, 참여 목록은 공개). | — | 사용자 2026-11-04(Q4-A) |
-| 참여 목록은 `ParticipatedPollReader`(poll이 선언, vote가 구현)에서 이 회원의 (`vote.id`, 투표 id) 쌍을 `vote.id` 내림차순으로 모두 받고, poll이 투표를 읽어 공개만 남긴 뒤 커서·페이지·`totalCount`를 메모리에서 처리한다. | — | 사용자 2026-11-04(Q3-B + Q7-A를 합친 해석, 승인 때 확인) |
-| 고칠 정본 문장(`/wrap`): `01-둘러보기.md` L37과 P-07을 "공개 목록(`GET /polls`)은 공개만, 내가 올린 목록은 공개·숨김"으로 한정하고 새 규칙·API 표·이력을 쓴다. `07-로그인과-회원.md` L12·L34(UC-16)·P-22(L72)의 "쓰기 요청마다 DB에서 상태 확인"은 읽기에도 탈퇴·없는 회원 확인이 생긴 점을 셋 모두 같은 취지로 반영한다. | — | 사용자 2026-11-04(Q2-A) |
+| 참여 목록은 `ParticipatedPollReader`(poll이 선언, vote가 구현)에서 이 회원이 참여한 **공개 투표**의 (`vote.id`, 투표 id) 쌍을 `vote.id` 내림차순으로, 커서 이후 한 쪽만 `Slice`로 받고 `totalCount`도 받는다. vote의 쿼리가 `Poll`과 join해 공개만 거른다. vote 쿼리가 투표도 함께 읽으므로 poll은 다시 읽거나 참여 수를 붙이지 않고 쪽을 그대로 내린다. | — | 사용자 2026-11-04(Q3-B, Q7을 A→B로 변경 "ㄱㄱ") |
+| 고칠 정본 문장(`/wrap`): `01-둘러보기.md` L37과 P-07을 "공개 목록(`GET /polls`)은 공개만, 내가 올린 목록은 공개·숨김"으로 한정하고 새 규칙·API 표·이력을 쓴다. `07-로그인과-회원.md` L12·L34(UC-16)·P-22(L72)의 "쓰기 요청마다 DB에서 상태 확인"은 읽기에도 탈퇴·없는 회원 확인이 생긴 점을 셋 모두 같은 취지로 반영한다. 둘째 PR의 `/wrap`은 `아키텍처.md` 조회 조합과 `설계-결정.md` L47·L89에 "참여 목록은 예외로 vote 쿼리가 `Poll`을 join해 공개만 거른다. 공개의 정의는 `Poll.status`이고 vote는 그 값을 읽기만 한다"를 쓴다(Q11). | — | 사용자 2026-11-04(Q2-A) |
 | 두 목록 모두 정지 회원도 볼 수 있다. 탈퇴 회원은 401, DB에 없는 회원은 404다(`GET /members/me`와 같다). | 탈퇴 401 `UNAUTHENTICATED`, 없음 404 `MEMBER_NOT_FOUND` | P-05 · 사용자 2026-11-04(Q5-A, "dd"를 ㅇㅇ로 읽음, 승인 때 확인) |
 | 두 목록은 `GET /polls`의 `category` 파라미터를 받지 않는다(무시된다). 컨트롤러가 `category`를 선언하지 않으므로 잘못된 값을 줘도 400이 나지 않는다. 페이지 크기는 `GET /polls`와 같다(기본 20, 1~50으로 보정). 올린 목록의 커서는 `PollCursor`(투표 id), 참여 목록의 커서는 별도 커서(`vote.id`, `ReportCursor` 선례)다. 커서 형식이 틀리면 400 `MALFORMED_REQUEST`다. 두 커서는 구분하지 않으므로(Q10-A) 다른 목록의 커서를 넣어도 400이 나지 않는다. | 400 | 사용자 2026-11-04(Q9-A) · `PollListRequest` 선례 |
 
 ## 건드리는 것
 
-- API: 목록 두 개(`GET /polls/mine`, `GET /polls/voted`). 응답은 `items`, `nextCursor`, `totalCount`다. `items`의 한 줄은 `GET /polls`의 `PollSummaryResponse`와 같다(질문, 카테고리, 참여 수, 마감 여부, 마감 시각, 생성 시각)에 올린 목록만 `status`를 더한다.
+- API: 목록 두 개(`GET /polls/mine`, `GET /polls/voted`). 응답은 `items`, `nextCursor`, `totalCount`다. `items`의 한 줄은 올린 목록은 `GET /polls`의 `PollSummaryResponse`와 같고(질문, 카테고리, 참여 수, 마감 여부, 마감 시각, 생성 시각) `status`를 더한다. 참여 목록은 참여 수를 뺀 다섯 필드다(새 항목 응답 `VotedPollSummaryResponse`, Q6 변경).
 - 코드(예상): `poll` 쪽에 조회 두 개(`PollQueryService`, `PollReader`, `PollJpaRepository`)와 응답 DTO. 참여 목록은 참여 기록이 `vote` 도메인에 있어서 `ParticipationReader`처럼 `poll`이 포트를 선언하고 `vote`가 구현한다(아키텍처 '조회 조합'의 첫 행, 의존 방향 `vote → poll`을 지킨다, Q7).
 - DB: 스키마는 안 바뀐다. `poll.author_id`와 `vote.member_id`는 외래키라 MySQL이 인덱스를 자동으로 만든다(V1 DDL에는 인덱스가 따로 보이지 않고, 테스트 H2와 운영 MySQL이 같은지는 측정 이슈로 미룬다). 조회 최적화 인덱스는 측정 뒤로 미룬다는 방침(`ERD.md` §5)을 따른다.
-- 문서: `01-둘러보기.md`(규칙·사용하는 API·이력), `03-참여하기.md`(사용하는 API 한 줄), `07-로그인과-회원.md`(사용하는 API 한 줄), 생성 문서(`openapi.json`, `API-목록.md`), `로드맵.md`(M2 또는 M4에 #163 항목), `ERD.md` §6 쿼리 모양에 한 줄(필요하면).
+- 문서: `01-둘러보기.md`(규칙·사용하는 API·이력), `03-참여하기.md`(사용하는 API 한 줄), `07-로그인과-회원.md`(사용하는 API 한 줄), 생성 문서(`openapi.json`, `API-목록.md`), `로드맵.md`(M2 또는 M4에 #163 항목), `ERD.md` §6 쿼리 모양에 한 줄(필요하면), 둘째 PR은 `아키텍처.md`(조회 조합 L94·L97)와 `설계-결정.md`(L47·L89)에 참여 목록 예외(Q11).
 - 안 건드리는 것: `GET /polls`와 `GET /polls/{pollId}`, 참여·삭제 규칙, 인증 필터, 다른 사람의 목록 조회(본인만).
 
 ## 접근
@@ -57,21 +57,24 @@ status: 완료
 | Q3 | 정렬 기준은? | 올린 목록은 투표 id 내림차순(최신순, `PollCursor` 그대로). **참여 목록** A 투표 id 내림차순(기존 커서 그대로, 참여 시각과 무관): 가장 단순하다. B 참여 시각 내림차순(최근에 참여한 것 먼저): 별도 커서 클래스(vote id 기준, `ReportCursor` 선례)와 정렬 쿼리가 필요하고, 포트가 (참여 id, 투표 id) 쌍을 순서대로 돌려줘야 한다(공개 필터로 걸러져도 `nextCursor`가 가리킬 참여 id를 알아야 해서). 같은 회원은 투표당 참여가 한 건이라(`uq_vote_member`) 중복은 없다. 추천은 B다(화면 의도가 "내가 최근에 참여한 것"이라는 해석, 확인 필요). | B (사용자 2026-11-04) |
 | Q4 | `totalCount`가 세는 범위는? | **A** 목록에 나올 수 있는 전체 개수(커서·페이지와 무관, 매 요청 같은 값): 요청마다 count 쿼리 한 번이 늘고, 참여 목록은 공개 필터와 같이 세야 해서 Q7과 얽힌다. **B** 첫 페이지에서만 주고 이후 null: 쿼리는 줄지만 화면이 첫 응답을 들고 있어야 한다. 이슈 본문은 "화면이 개수를 바로 보여 줄 수 있게"라고 해서 A로 읽었다. | A (사용자 2026-11-04) |
 | Q5 | 정지·탈퇴·없는 회원은? | **A** `GET /members/me`와 같다: 정지 회원은 조회 가능, 탈퇴 401, 없는 회원 404(`MemberReader.getNotWithdrawnMember`, `MemberQueryService.getMyInfo`와 같은 경로). 지금 `PollQueryService`는 회원 상태를 보지 않으므로 `poll`이 `MemberReader`로 확인하는 호출이 새로 생긴다(`poll → member`는 허용 의존). **B** 쓰기와 같다(`validateActive`): 정지 403. `07-로그인과-회원.md` L10과 P-05가 정지 회원의 "조회"를 허용하므로 B는 정본 문장을 거스른다. | A ("dd"를 ㅇㅇ로 읽음, 사용자 2026-11-04, 승인 때 확인) |
-| Q6 | 항목에 더할 필드는? | 올린 목록은 Q2-A면 `status`가 필요하다. 참여 목록은 **A** 추가 없음, **B** 내 선택(`myChoice`)이나 참여 시각 추가: 포트가 선택 번호와 시각까지 돌려줘야 하고 응답 DTO와 테스트가 는다. 이슈는 필드를 말하지 않는다. | 추천대로: 올린 목록 `status`만, 참여 목록 추가 없음 (사용자 "ㄱㄱ" 2026-11-04) |
-| Q7 | 참여 목록의 공개 필터와 개수를 어디서 센다? | **A** `vote`가 이 회원의 참여 투표 id를 모두 돌려주고 `poll`이 공개 필터·정렬·페이지·개수를 메모리에서 한다: 단순하고 도메인 경계를 지키지만, 공개 필터와 `totalCount`를 하려면 id만이 아니라 참여한 투표의 `Poll` 엔티티 전체를 `findAllById`로 읽어야 하고 `IN` 절이 참여 수만큼 커진다(`설계-결정.md`의 참여 수 집계는 "페이지의 투표 ID `IN`"이 전제라 다르다). 측정 전에는 수치를 주장하지 않는다. **B** `vote`의 쿼리가 `poll` 엔티티를 조인한다: 한 쿼리로 끝나지만 다른 도메인 엔티티를 쓰는 선례가 없고 ArchUnit 규칙과 맞는지 확인이 필요하다. 추천은 A다(MVP 규모, 필요해지면 B로 바꾼다). | A: 포트로 id를 받아 `poll`이 공개 필터·개수를 메모리에서 한다. 사용자가 "카테고리 받지 마"라고 했으나 이는 Q9이고, 공개 필터를 뺀다는 말은 아니었다 (사용자 2026-11-04) |
+| Q6 | 항목에 더할 필드는? | 올린 목록은 Q2-A면 `status`가 필요하다. 참여 목록은 **A** 추가 없음, **B** 내 선택(`myChoice`)이나 참여 시각 추가: 포트가 선택 번호와 시각까지 돌려줘야 하고 응답 DTO와 테스트가 는다. 이슈는 필드를 말하지 않는다. | 올린 목록은 `status`를 더한다. 참여 목록은 처음에 공개 목록과 같게(참여 수 포함) 두었으나 "투표별 참여 수가 필요해?"에 사용자가 "빼"라고 해서 **참여 수를 뺀다**(사용자 2026-11-04) |
+| Q7 | 참여 목록의 공개 필터와 개수를 어디서 센다? | **A** `vote`가 이 회원의 참여 투표 id를 모두 돌려주고 `poll`이 공개 필터·정렬·페이지·개수를 메모리에서 한다: 단순하고 도메인 경계를 지키지만, 공개 필터와 `totalCount`를 하려면 id만이 아니라 참여한 투표의 `Poll` 엔티티 전체를 `findAllById`로 읽어야 하고 `IN` 절이 참여 수만큼 커진다(`설계-결정.md`의 참여 수 집계는 "페이지의 투표 ID `IN`"이 전제라 다르다). 측정 전에는 수치를 주장하지 않는다. **B** `vote`의 쿼리가 `poll` 엔티티를 조인한다: 한 쿼리로 끝나고 서비스가 짧아진다. `vote → poll`은 ArchUnit이 허용한다. 대신 공개 판단이 vote의 쿼리에 들어가 정본의 소유 문장과 어긋나므로 정본 예외가 필요하다(Q11). 처음 추천은 A(MVP 규모)였으나 구현 뒤 B로 바꿨다. | ~~A~~ → **B로 변경**: `vote`의 쿼리가 `Poll`을 join해 공개 필터·정렬·커서·개수를 DB에서 한다. 처음에는 A(메모리 처리)로 정했으나 구현해 보니 서비스에 자르기·거르기 코드가 몰려 복잡했고, `ArchitectureTest`가 `vote → poll`을 허용함을 확인해 B로 바꿨다 (사용자 2026-11-04, "ㄱㄱ") |
 | Q10 | 올린 목록 커서와 참여 목록 커서를 구분하나? | **A** 구분하지 않는다: 둘 다 같은 숫자 형식이라 `GET /polls`나 다른 목록의 `nextCursor`를 넣어도 400이 나지 않고 엉뚱한 위치에서 이어진다(클라이언트 실수일 때만 생기고 구현이 가장 작다). **B** 커서에 종류 표시를 넣어 다른 목록의 커서는 400으로 거절한다: 커서 클래스에 종류 필드와 검증, 테스트가 는다. 추천은 A다(`GET /polls`의 커서도 지금 같은 모양이라 새 위험이 아니다). | A ("QA A"를 Q10 A로 읽음, 사용자 2026-11-04, 승인 때 확인) |
 | Q9 | 두 목록이 `category` 필터를 받나? | **A** 받지 않는다(규칙 표대로, 파라미터는 무시된다): 이슈 범위 밖이고 구현이 가장 작다. **B** 받는다: `GET /polls`의 `category`(#162)를 같이 쓰려면 올린·참여 쿼리마다 카테고리 분기와 `totalCount`도 필터 안에서 세야 하고 테스트가 는다. 추천은 A다. | A (사용자 2026-11-04) |
 | Q8 | PR을 나누나? | **A** 한 PR: 포트와 두 목록이 한 번에 리뷰된다. **B** 올린 목록 PR(`Refs #163`)과 참여 목록 PR(`Closes #163`): 올린 목록은 포트가 필요 없어 먼저 작고 빠르게 머지된다. 추천은 B다. | B (사용자 2026-11-04) |
+| Q11 | Q7-B는 `아키텍처.md` L94·L97("조회는 소유 도메인의 책임")과 `설계-결정.md` L47·L89(공개 목록은 poll 안에서만, 상태 판단은 도메인 객체)와 어긋난다. 어떻게 하나? (sketch-reviewer r1 SR-1) | **(a)** B를 유지하고 `/wrap`에서 두 문서에 참여 목록 예외를 쓴다(공개의 정의는 `Poll.status`이고 vote 쿼리는 읽기만 한다). 코드가 단순하다. **(b)** 정본을 안 건드린다: A로 돌아가거나 poll이 공개 투표 id를 먼저 뽑아 vote에 넘기는 중간안. 서비스가 복잡하다. 추천은 (a)다. | (a) (사용자 "ㄱㄱ" 2026-11-04, Q7-B 변경은 "B가 단순하다"는 사용자 지적에서 시작, 사용자 "ㄱㄱ") |
 
 승인 때 확인할 것:
 - 목록이 본인 것만 나온다는 전제(다른 회원의 목록은 없다).
 - 올린 목록에서 삭제 투표를 빼는 이유는 사용자가 A를 골랐을 뿐 말하지 않았다. 작성자가 삭제한 투표가 다시 보이지 않게 하려는 해석이 맞는지, 그리고 `01-둘러보기.md` L37과 P-07을 "공개 목록은 공개만, 내가 올린 목록은 공개·숨김"으로 한정해 고치는 것.
 - Q5의 "dd" 답이 A(정지 조회 가능)가 맞는지, Q10의 "QA A"가 Q10 A(커서 구분 안 함)가 맞는지.
-- Q3-B(참여 순서)와 Q7-A(메모리 처리)를 합친 계약(`vote.id` 기준 별도 커서, (`vote.id`, 투표 id) 쌍 포트)이 맞는지.
+- Q11(a): Q7-B를 위해 `/wrap`에서 `아키텍처.md`·`설계-결정.md`에 참여 목록 예외를 쓰는 것.
+- Q3-B(참여 순서)와 Q7-B(vote 쿼리가 Poll을 join해 공개만 거름) 계약(`vote.id` 기준 별도 커서, 공개 투표의 (`vote.id`, 투표 id) `Slice` 포트와 개수)이 맞는지.
 
 ## 구조
 
 - 코드(예상): `poll/api/PollWebApi`·`PollWebApiDocs`에 메서드 둘(`/api/v1/polls` 아래 같은 자원이라 새 컨트롤러를 만들지 않는다)과 응답 DTO, 별도 커서 클래스, `poll/application/PollQueryService`(조회 둘), `poll/application/ParticipatedPollReader`(포트, 새 이름), `vote/application`의 구현 클래스, `poll/infrastructure/PollJpaRepository`(작성자 기준 쿼리와 개수).
+- 참여 목록 계약(둘째 PR): 포트 `ParticipatedPollReader`는 `findAllPublicByMemberId(Long memberId, Long cursorId, int size)`로 `Slice<ParticipatedPoll>`(`poll/application/dto`, `voteId`·`poll`)을 `vote.id` 내림차순으로 돌려주고, `countPublicByMemberId(Long memberId)`로 전체 개수를 준다. 공개 여부는 vote의 쿼리가 `Poll`을 join해 거른다(`vote → poll` 허용 의존). `ParticipatedPoll`은 (`voteId`, `Poll`)이다: join이 이미 투표를 읽으므로 서비스가 `findAllByIds`로 다시 읽어 맞추지 않는다. `VoteJpaRepository`는 `ParticipatedPoll`(application)을 반환할 수 없으므로(infrastructure는 application에 의존하지 않는다) 기존 `MemberVote`처럼 repository 안 projection(`voteId`, `poll`)을 돌려주고 `VoteReader`가 `ParticipatedPoll`로 바꾼다. 목록 쿼리와 개수 쿼리의 조건(회원, `Poll.status = PUBLIC`)은 JPQL 두 곳에 있으므로 같은 조건인지를 테스트로 맞춘다. poll은 포트가 준 순서를 그대로 항목 순서와 `nextCursor`로 쓴다. 투표를 같은 쿼리에서 읽으므로 쌍을 받은 뒤 숨김 처리되는 창이 없다. `PollQueryService.getVotedPolls(Long memberId, CursorPaging paging)`은 `VotedPollPage`(`items`: `ParticipatedPoll` 목록, `hasNext`, `totalCount`)를 돌려주고 커서 id는 `vote.id`다. 참여 수를 안 붙이므로 `VotedPoll`·`PollSummary`는 쓰지 않고 `ParticipationReader`도 부르지 않는다. 항목 응답은 새 `VotedPollSummaryResponse`(`Poll`에서 다섯 필드)다. `nextCursor`는 새 `VoteCursor`(`api.dto`)로 만든다.
 - 문서: 위 '건드리는 것'의 문서 목록.
 
 ## 순서와 테스트
@@ -83,8 +86,8 @@ status: 완료
    - 슬라이스(`…WebApiTest`): 경로·쿼리 파라미터 바인딩·응답 모양(`items`, `nextCursor`, `totalCount`)만 본다. `category=` 아무 값을 붙여도 영향이 없는지 한 건.
    - 체인(대표 한 건): 로그인한 회원이 투표를 만든 뒤 목록에 나온다, 비로그인은 401.
 2. **참여 목록**(Q8-B의 둘째 PR, `Closes #163`, 같은 sketch를 이어서 쓴다. `01-둘러보기.md`는 PR마다 `/wrap`에서 자기 몫을 고친다)
-   - 서비스 통합: 본인 참여 투표만 나온다, 다른 회원의 참여는 안 나온다, 비회원(익명) 참여는 회원 목록에 안 나온다, 숨김·삭제 처리(Q2), 정렬(Q3), 커서, 마지막 쪽 `nextCursor` null, 공개 필터로 걸러진 항목이 페이지 경계에 걸려도 건너뛰거나 중복되지 않는다(최근 참여 N건이 숨김·삭제이고 그 뒤에 공개가 있는 경우, 필터 뒤 남은 개수가 정확히 페이지 크기인 경우), 숨김·삭제 참여가 섞여 있어도 `totalCount`는 공개만 센다.
-   - 포트 구현(`vote`, 서비스 통합): 회원의 (`vote.id`, 투표 id) 쌍을 `vote.id` 내림차순으로 돌려주고, 비회원(익명) 참여 행은 포함하지 않는다.
+   - 서비스 통합: 본인 참여 투표만 나온다, 다른 회원의 참여는 안 나온다, 비회원(익명) 참여는 회원 목록에 안 나온다, 숨김·삭제 처리(Q2), 정렬(Q3), 커서, 마지막 쪽 `nextCursor` null, 투표 id 순서와 참여 순서가 엇갈릴 때 참여 순서로 나온다(Q3-B), 숨김·삭제 참여가 섞여 있어도 `totalCount`는 공개만 센다. 공개 필터 경계(건너뜀·중복)는 포트 구현 테스트의 몫이다(필터가 DB 쿼리에 있다).
+   - 포트 구현(`vote`, 서비스 통합): 숨김·삭제 투표가 참여 사이에 섞여 있어도 `hasNext`와 마지막 쪽 `nextCursor`(마지막 `vote.id`)가 맞고 빠짐·중복이 없다, 필터 뒤 남은 개수가 정확히 `size`이면 다음 쪽이 없다, 개수가 끝까지 넘긴 목록의 길이와 같다. 회원이 참여한 공개 투표의 (`vote.id`, 투표 id) 쌍을 `vote.id` 내림차순으로, 커서 이후 `size`개와 다음 쪽 여부로 돌려주고, 숨김·삭제 투표와 비회원(익명) 참여 행은 포함하지 않으며, 공개 투표의 전체 개수를 센다.
    - 슬라이스·체인: 위와 같은 층으로, 체인은 참여한 뒤 목록에 나오는지 대표 한 건.
 3. 정본 갱신은 `/wrap`에서 한다. 구현 중에는 이 sketch가 기준이다.
 
@@ -100,18 +103,18 @@ status: 완료
 
 - 다른 회원의 투표가 섞이면 안 된다. 회원 ID는 토큰에서만 받고 쿼리 파라미터로 받지 않는다. 다른 회원의 투표를 심어 둔 테스트로 확인한다.
 - 비회원 참여와 회원 참여가 한 테이블(`vote`)에 있다. `member_id`가 NULL인 행을 절대 섞지 않도록 `member_id` 기준으로만 찾는다(`ck_vote_voter`).
-- `totalCount`와 `items`의 필터가 어긋나면 화면이 틀린 개수를 보인다. 같은 조건을 한 곳에서 만들고, 개수와 목록 길이가 맞는 테스트를 둔다.
-- 참여가 많은 회원의 전체 읽기(Q7-A)와 요청마다 count 쿼리(Q4-A)는 측정 전이라 수치를 주장하지 않는다. 느려지면 조회 최적화 인덱스와 쿼리 조인(Q7-B)을 따로 이슈로 정한다.
+- `totalCount`와 `items`의 필터가 어긋나면 화면이 틀린 개수를 보인다. 목록과 개수가 JPQL 두 곳이라 같은 조건을 한 곳에서 만들 수 없으므로, 끝까지 넘긴 목록 길이와 `totalCount`가 같은 테스트로 맞춘다.
+- 요청마다 count 쿼리(Q4-A)와 `vote`–`poll` join은 측정 전이라 수치를 주장하지 않는다. 느려지면 조회 최적화 인덱스를 따로 이슈로 정한다.
 
 ## 결과
 
-첫 PR(Q8-B)로 **내가 올린 투표 목록 `GET /polls/mine`**을 만들었다. 참여 목록(`GET /polls/voted`)은 둘째 PR이다.
+PR을 둘로 나눴다(Q8-B). 첫 PR은 **내가 올린 투표 목록 `GET /polls/mine`**(아래 첫 PR 결과), 둘째 PR은 **내가 참여한 투표 목록 `GET /polls/voted`**(맨 아래 '둘째 PR 결과')다.
 
 - **API**: 로그인한 회원 본인의 공개·숨김 투표를 투표 id 내림차순으로 내리고 삭제 투표는 뺀다. 항목은 공개 목록 필드에 `status`를 더했고 응답에 `items`, `nextCursor`, `totalCount`가 있다. 쪽 크기는 `GET /polls`와 같고(기본 20, 1~50) `category`는 받지 않는다. 정지 회원은 볼 수 있고 탈퇴 401, 없는 회원 404다.
 - **코드**: `PollWebApi`·`PollWebApiDocs`에 `getMyPolls`, `PollQueryService.getMyPolls`, `PollReader.findAllByAuthorOlderThan`·`countByAuthor`, `PollJpaRepository`의 작성자 기준 쿼리와 개수, 새 DTO `CursorPaging`(application), `MyPollPage`, `MyPollListResponse`, `MyPollSummaryResponse`. 읽기 검증은 `MemberValidator.validateNotWithdrawn`을 새로 만들어 쓴다.
 - **정본**: `01-둘러보기.md`(UC-18, 규칙, P-07·L37 한정, 사용하는 API, 이력), `07-로그인과-회원.md`(L12, UC-16, P-22, API 표, 이력), `index.md`, `ERD.md` §6, `설계-결정.md`, `로드맵.md`. 생성 문서(`openapi.json`, `API-목록.md`)는 다시 만들었다.
 - **테스트**: 서비스 통합 21, 슬라이스 7, 체인 4, `MemberValidatorTest` 3건을 더했다.
-- **사용자 확인(2026-11-04)**: 승인 직전에 "삭제 투표를 올린 목록에서 빼는 해석, `01-둘러보기.md` L37·P-07 한정, Q5, Q10, Q3-B+Q7-A 계약, 본인 것만" 확인 항목에 사용자가 "맞아"라고 답했고 이어서 승인했다.
+- **사용자 확인(2026-11-04)**: 승인 직전에 "삭제 투표를 올린 목록에서 빼는 해석, `01-둘러보기.md` L37·P-07 한정, Q5, Q10, Q3-B+Q7-A 계약, 본인 것만" 확인 항목에 사용자가 "맞아"라고 답했고 이어서 승인했다(Q7은 둘째 PR에서 B로 바뀌었다, Q11).
 - **리뷰**: domain-reviewer r1 FAIL(빈 목록 500)→r2 PASS, code-reviewer r1 FAIL(같은 결함)→r2 PASS, fact-verifier r1 PASS_WITH_FIXES→r2 PASS. r1에서 권고로 나온 `MemberValidator` 중복(CR-2)은 사용자 지시(검증은 Validator로, `get`은 반환값이 있는 이름)에 따라 반영하지 않았다.
 
 ### 계획과 달라진 점
@@ -124,8 +127,34 @@ status: 완료
 
 ### 한계와 후속
 
-- **참여 목록**: 둘째 PR에서 한다(`GET /polls/voted`, `ParticipatedPollReader` 포트, `vote.id` 기준 별도 커서, `03-참여하기.md`와 UC-19). 이 sketch를 이어서 쓰고, 시작 때 `status`를 `승인됨`으로 되돌린다.
+- **참여 목록**: 둘째 PR에서 했다(맨 아래 '둘째 PR 결과').
 - **서비스 인자 묶기**: 공개 목록(`GET /polls`)과 관리자 API에 같은 패턴이 남아 있다. #179.
-- **변환 중복**: `MyPollSummaryResponse`가 `PollSummaryResponse`의 6개 필드 변환을 복사했다. 참여 목록 PR에서 세 번째 사용처가 생기면 공용으로 모은다.
+- **변환 중복**: 첫 PR에서 `MyPollSummaryResponse`가 `PollSummaryResponse`의 변환을 복사했고, 둘째 PR에서 세 번째 사용처가 생겨 시각 변환을 `PollTimes`로 모았다. 나머지 필드 변환(`id`, `question`, `category`)은 응답마다 필드 구성이 달라 복사로 남아 있다.
 - **프런트**: `/polls/mine`은 공개 ID 형식과 겹치지 않는 경로다. `participated`는 12자 영문이라 `voted`로 정했다.
 - **count 쿼리·인덱스**: 요청마다 개수 쿼리를 한 번 더 돈다. 느려지면 `(author_id, id)` 복합 인덱스를 측정한 뒤 추가한다.
+
+## 둘째 PR 결과 (참여 목록)
+
+**내가 참여한 투표 목록 `GET /polls/voted`**를 만들었다(`Closes #163`).
+
+- **API**: 로그인한 회원 본인의 참여 기록이 있는 공개 투표를 참여 순서의 역순(`vote.id` 내림차순)으로 내린다. 숨김·삭제 투표와 비회원 참여는 나오지 않는다. 항목은 질문, 카테고리, 마감 여부, 마감 시각, 생성 시각이고 참여 수는 없다. 응답에 `items`, `nextCursor`, `totalCount`가 있다. 쪽 크기와 `category` 처리, 정지 회원 조회 가능, 탈퇴 401, 없는 회원 404는 올린 목록과 같다.
+- **코드**: `PollWebApi`·`PollWebApiDocs`에 `getVotedPolls`, `PollQueryService.getVotedPolls`, 포트 `ParticipatedPollReader`(poll 선언)와 `VoteParticipatedPollReader`(vote 구현), `VoteReader`·`VoteJpaRepository`의 `Poll` join 쿼리와 개수 쿼리, DTO `ParticipatedPoll`·`VotedPollPage`, 응답 `VotedPollListResponse`·`VotedPollSummaryResponse`, 커서 `VoteCursor`, 시각 변환 `PollTimes`.
+- **정본**: `01-둘러보기.md`(UC-19, 규칙, P-07, 사용하는 API, 이력), `03-참여하기.md`, `07-로그인과-회원.md`, `index.md`, `ERD.md` §6, `아키텍처.md`(조회 조합의 참여 목록 예외), `설계-결정.md`, `로드맵.md`. 생성 문서는 다시 만들었다.
+- **테스트**: 서비스 통합 12, 포트 구현 22, 슬라이스 9, 체인 4건.
+- **리뷰**: domain-reviewer r1 PASS→r2 FAIL(API 설명문에 참여 수가 남음)→수정, code-reviewer r1 PASS_WITH_FIXES→r2 PASS_WITH_FIXES(CR-2·3·4 반영, 재리뷰는 이름·구조·테스트 정리라 생략), fact-verifier r1 PASS_WITH_FIXES→r2 PASS. sketch-reviewer r1 FAIL(Q7-B가 정본 소유 문장과 충돌)→Q11(a)로 정본 예외를 쓰는 걸로 정함.
+
+### 계획과 달라진 점
+
+- **Q7: A→B** (사용자 지시): 처음에는 vote가 참여 투표 id를 전부 주고 poll이 메모리에서 거르고 자르는 A로 승인되었다. 구현하니 서비스에 거르기·자르기·재조립이 몰려 사용자가 복잡하다고 지적해, vote의 쿼리가 `Poll`을 join해 공개만 거르고 쪽을 자르는 B로 바꿨다. 정본 소유 문장과 어긋나서 Q11로 예외를 정본에 썼다.
+- **Q6 변경** (사용자 지시): 항목을 공개 목록과 같게(참여 수 포함) 두었다가 "투표별 참여 수가 필요해?"에 사용자가 "빼"라고 해서 참여 수를 뺐다. 그래서 `PollSummary`·`ParticipationReader` 호출이 필요 없어졌고 항목 응답이 별개(`VotedPollSummaryResponse`)다.
+- **포트 반환**: (`vote.id`, 투표 id) 쌍에서 (`vote.id`, `Poll`)로 바꿨다. join이 이미 투표를 읽으므로 poll이 다시 읽지 않는다.
+- **`VotedPollPage`**: `Slice`를 그대로 담고 정적 팩토리 `of`로 만든다(사용자 지시).
+- **리뷰 반영**: 응답 시각 변환을 `PollTimes`로 모았고, repository 이름을 `ParticipatedPollRow`, `countByMemberIdAndPollStatus` 등으로 바꿨다. 서비스 테스트의 쪽 경계 중복을 포트 테스트로 모았다.
+
+### 한계와 후속
+
+- **MySQL 확인 못 함**: `vote`–`poll` join 쿼리는 H2 테스트에서만 돌았고 운영 MySQL에서 같은 SQL·실행 계획인지는 확인하지 못했다. 느려지면 `vote(member_id)`와 `poll(status)` 인덱스를 측정한 뒤 정한다.
+- **count 쿼리**: 요청마다 개수 쿼리를 한 번 더 돈다.
+- **커서 중복**: `PollCursor`와 `VoteCursor`가 글자 단위로 같다. 세 번째 커서가 생기거나 커서 형식을 바꿀 때(Q10-B) 공용 헬퍼로 모은다.
+- **응답 변환 중복**: `id`·`question`·`category` 변환은 응답마다 남아 있다. #179에서 서비스 인자 묶기와 함께 볼 수 있다.
+- **프런트**: 올린 목록은 참여 수가 있고 참여한 목록은 없어 항목 모양이 다르다.
