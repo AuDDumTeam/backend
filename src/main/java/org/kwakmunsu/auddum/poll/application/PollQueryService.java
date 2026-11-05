@@ -7,10 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.auddum.member.application.MemberValidator;
 import org.kwakmunsu.auddum.poll.application.dto.CursorPaging;
 import org.kwakmunsu.auddum.poll.application.dto.MyPollPage;
+import org.kwakmunsu.auddum.poll.application.dto.ParticipatedPoll;
 import org.kwakmunsu.auddum.poll.application.dto.Participation;
 import org.kwakmunsu.auddum.poll.application.dto.PollDetail;
 import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
 import org.kwakmunsu.auddum.poll.application.dto.Viewer;
+import org.kwakmunsu.auddum.poll.application.dto.VotedPollPage;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
@@ -24,6 +26,7 @@ public class PollQueryService {
     private final MemberValidator memberValidator;
     private final PollReader pollReader;
     private final ParticipationReader participationReader;
+    private final ParticipatedPollReader participatedPollReader;
 
     /**
      * 투표 상세에 참여 정보를 붙인다. 열람 규칙은 {@link PollReader#getReadable}과 같고(숨김·삭제 투표는 작성자와 관리자에게만),
@@ -78,6 +81,26 @@ public class PollQueryService {
             .summaries(polls.map(poll -> PollSummary.of(poll, counts.get(poll.getId()))))
             .totalCount(pollReader.countByAuthor(memberId))
             .build();
+    }
+
+    /**
+     * 내가 참여한 투표 목록. 공개 투표만 최근에 참여한 것 먼저 내리고(숨김·삭제 투표는 뺀다) 전체 개수를 함께 준다.
+     * 목록의 순서와 쪽은 참여 기록(vote)이 정하고 커서는 참여 기록 id다. 투표는 vote 쿼리가 함께 읽어 오고 참여 수는 붙이지 않는다.
+     * 읽기라서 정지 회원도 볼 수 있다. 없는 회원은 404, 탈퇴한 회원은 401이다.
+     */
+    public VotedPollPage getVotedPolls(Long memberId, CursorPaging paging) {
+        memberValidator.validateNotWithdrawn(memberId);
+
+        Slice<ParticipatedPoll> participated = participatedPollReader.findAllPublicByMemberId(
+            memberId,
+            paging.cursorId(),
+            paging.size()
+        );
+
+        return VotedPollPage.of(
+            participated,
+            participatedPollReader.countPublicByMemberId(memberId)
+        );
     }
 
 }

@@ -9,7 +9,6 @@ import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.poll.domain.PollStatus;
-import org.kwakmunsu.auddum.support.config.TimeConfig;
 
 /**
  * 내가 올린 투표 목록의 한 건. 투표 목록 항목에 노출 상태를 더한 것이고, 내부 id는 담지 않는다.
@@ -49,8 +48,8 @@ public record MyPollSummaryResponse(
             .status(poll.getStatus())
             .participantCount(summary.participantCount())
             .closed(poll.isClosed(now))
-            .closesAt(TimeConfig.toKstOffset(poll.getClosesAt() == null ? null : poll.getClosesAt().value()))
-            .createdAt(TimeConfig.toKstOffset(poll.getCreatedAt()))
+            .closesAt(PollTimes.closesAtOf(poll))
+            .createdAt(PollTimes.createdAtOf(poll))
             .build();
     }
 

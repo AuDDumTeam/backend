@@ -8,6 +8,7 @@ import org.kwakmunsu.auddum.poll.api.dto.MyPollListResponse;
 import org.kwakmunsu.auddum.poll.api.dto.PollCreateRequest;
 import org.kwakmunsu.auddum.poll.api.dto.PollDetailResponse;
 import org.kwakmunsu.auddum.poll.api.dto.PollListResponse;
+import org.kwakmunsu.auddum.poll.api.dto.VotedPollListResponse;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.springframework.http.ResponseEntity;
 
@@ -59,6 +60,22 @@ public abstract class PollWebApiDocs {
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED: 로그인하지 않았거나 탈퇴한 회원")
     @ApiResponse(responseCode = "404", description = "MEMBER_NOT_FOUND: 없는 회원")
     public abstract ResponseEntity<MyPollListResponse> getMyPolls(
+        @Parameter(hidden = true) Long memberId,
+        @Parameter(description = "이전 응답의 nextCursor. 없으면 첫 페이지") String cursor,
+        @Parameter(description = "한 페이지 개수. 기본 20, 1보다 작으면 1, 50을 넘으면 50으로 보정") Integer size
+    );
+
+    @Operation(
+        summary = "내가 참여한 투표 목록",
+        description = "로그인한 회원이 참여한 공개(PUBLIC) 투표를 최근에 참여한 것 먼저 내린다. 숨김·삭제 투표와 비회원(익명) 참여는 나오지 않는다. 각 항목은 공개 ID, 질문, 카테고리, 마감 여부, 마감 시각, 생성 시각을 담고 참여 수는 담지 않는다. "
+            + "응답에 목록에 나올 수 있는 전체 개수(totalCount)를 함께 준다(cursor와 size와 무관). cursor는 이전 응답의 nextCursor를 그대로 넘기는 불투명한 값이다. "
+            + "정지 회원도 볼 수 있다. category 같은 다른 쿼리 파라미터는 받지 않고 무시한다."
+    )
+    @ApiResponse(responseCode = "200", description = "목록. 참여한 투표가 없으면 빈 items와 totalCount 0")
+    @ApiResponse(responseCode = "400", description = "MALFORMED_REQUEST: cursor 형식 오류, size가 숫자가 아님")
+    @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED: 로그인하지 않았거나 탈퇴한 회원")
+    @ApiResponse(responseCode = "404", description = "MEMBER_NOT_FOUND: 없는 회원")
+    public abstract ResponseEntity<VotedPollListResponse> getVotedPolls(
         @Parameter(hidden = true) Long memberId,
         @Parameter(description = "이전 응답의 nextCursor. 없으면 첫 페이지") String cursor,
         @Parameter(description = "한 페이지 개수. 기본 20, 1보다 작으면 1, 50을 넘으면 50으로 보정") Integer size

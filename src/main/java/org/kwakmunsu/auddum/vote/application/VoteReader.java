@@ -8,13 +8,17 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.auddum.poll.application.dto.OptionTally;
+import org.kwakmunsu.auddum.poll.application.dto.ParticipatedPoll;
 import org.kwakmunsu.auddum.poll.application.dto.PollTally;
 import org.kwakmunsu.auddum.poll.domain.Poll;
+import org.kwakmunsu.auddum.poll.domain.PollStatus;
 import org.kwakmunsu.auddum.vote.domain.Vote;
 import org.kwakmunsu.auddum.vote.domain.Voter;
 import org.kwakmunsu.auddum.vote.infrastructure.VoteJpaRepository;
 import org.kwakmunsu.auddum.vote.infrastructure.VoteJpaRepository.OptionCount;
 import org.kwakmunsu.auddum.vote.infrastructure.VoteJpaRepository.PollCount;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,6 +51,19 @@ public class VoteReader {
             .collect(Collectors.toMap(PollCount::getPollId, PollCount::getVotes));
 
         return pollIds.stream().collect(Collectors.toMap(Function.identity(), id -> counts.getOrDefault(id, 0L), (a, b) -> a));
+    }
+
+    /** 회원이 참여한 공개 투표를 최근 참여 먼저(참여 기록 id 내림차순)로 size개 돌려준다. cursorId가 없으면 첫 쪽이다. 비회원 참여는 나오지 않는다. */
+    public Slice<ParticipatedPoll> findAllPublicByMember(Long memberId, Long cursorId, int size) {
+        long beforeId = cursorId == null ? Long.MAX_VALUE : cursorId;
+
+        return voteRepository.findByMemberIdAndPollStatusOlderThan(memberId, PollStatus.PUBLIC, beforeId, PageRequest.ofSize(size))
+            .map(vote -> ParticipatedPoll.of(vote.getVoteId(), vote.getPoll()));
+    }
+
+    /** 회원이 참여한 공개 투표의 전체 개수. */
+    public long countPublicByMember(Long memberId) {
+        return voteRepository.countByMemberIdAndPollStatus(memberId, PollStatus.PUBLIC);
     }
 
     /** 선택지별 득표 수. 득표가 없는 선택지도 0으로 포함하고 순번 오름차순이다. */
