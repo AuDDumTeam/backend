@@ -8,13 +8,11 @@ import org.kwakmunsu.auddum.poll.api.dto.MyPollListResponse;
 import org.kwakmunsu.auddum.poll.api.dto.PollCreateRequest;
 import org.kwakmunsu.auddum.poll.api.dto.PollDetailResponse;
 import org.kwakmunsu.auddum.poll.api.dto.PollCursor;
-import org.kwakmunsu.auddum.poll.api.dto.PollListRequest;
 import org.kwakmunsu.auddum.poll.api.dto.PollListResponse;
 import org.kwakmunsu.auddum.poll.api.dto.VoteCursor;
 import org.kwakmunsu.auddum.poll.api.dto.VotedPollListResponse;
 import org.kwakmunsu.auddum.poll.application.PollCommandService;
 import org.kwakmunsu.auddum.poll.application.PollQueryService;
-import org.kwakmunsu.auddum.poll.application.dto.CursorPaging;
 import org.kwakmunsu.auddum.poll.application.dto.MyPollPage;
 import org.kwakmunsu.auddum.poll.application.dto.PollDetail;
 import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
@@ -23,6 +21,7 @@ import org.kwakmunsu.auddum.poll.application.dto.VotedPollPage;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
+import org.kwakmunsu.auddum.support.paging.CursorPaging;
 import org.kwakmunsu.auddum.support.stereotype.WebApi;
 import org.kwakmunsu.auddum.support.web.AnonCookieName;
 import org.kwakmunsu.auddum.support.web.CurrentMemberId;
@@ -65,8 +64,7 @@ public class PollWebApi extends PollWebApiDocs {
         @RequestParam(required = false) Integer size,
         @RequestParam(required = false) Category category
     ) {
-        PollListRequest request = new PollListRequest(cursor, size);
-        Slice<PollSummary> slice = pollQueryService.getPollSummaries(request.cursorId(), category, request.pageSize());
+        Slice<PollSummary> slice = pollQueryService.getPollSummaries(category, CursorPaging.of(PollCursor.idOf(cursor), size));
 
         return ResponseEntity.ok(PollListResponse.of(slice, LocalDateTime.now(TimeConfig.KST)));
     }

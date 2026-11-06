@@ -21,9 +21,11 @@ public record AdminReportListResponse(
             .map(AdminReportSummaryResponse::from)
             .toList();
 
-        String nextCursor = slice.hasNext()
-            ? AdminReportListRequest.nextCursor(slice.getContent().getLast().report().getId())
-            : null;
+        String nextCursor = null;
+        if (slice.hasNext()) {
+            Long lastId = slice.getContent().getLast().report().getId();
+            nextCursor = new ReportCursor(lastId).encode();
+        }
 
         return AdminReportListResponse.builder()
             .items(items)

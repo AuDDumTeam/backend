@@ -3,6 +3,7 @@ package org.kwakmunsu.auddum.admin.api;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.auddum.admin.api.dto.AdminPollTakedownRequest;
 import org.kwakmunsu.auddum.admin.application.AdminPollCommandService;
+import org.kwakmunsu.auddum.admin.application.dto.PollTakedownOrder;
 import org.kwakmunsu.auddum.support.stereotype.WebApi;
 import org.kwakmunsu.auddum.support.web.CurrentMemberId;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class AdminPollWebApi extends AdminPollWebApiDocs {
         @PathVariable String pollId,
         @RequestBody AdminPollTakedownRequest request
     ) {
-        adminPollCommandService.takedown(adminId, pollId, request.status(), request.reason());
+        adminPollCommandService.takedown(adminId, pollId, new PollTakedownOrder(request.status(), request.reason()));
 
         return ResponseEntity.noContent().build();
     }

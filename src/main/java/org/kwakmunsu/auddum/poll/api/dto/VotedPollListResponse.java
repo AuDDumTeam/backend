@@ -28,7 +28,11 @@ public record VotedPollListResponse(
             .toList();
 
         // 다음 페이지 커서를 계산한다. 마지막 페이지(빈 목록 포함)면 null이다.
-        String nextCursor = page.items().hasNext() ? new VoteCursor(participated.getLast().voteId()).encode() : null;
+        String nextCursor = null;
+        if (page.items().hasNext()) {
+            Long lastVoteId = participated.getLast().voteId();
+            nextCursor = new VoteCursor(lastVoteId).encode();
+        }
 
         return VotedPollListResponse.builder()
             .items(items)

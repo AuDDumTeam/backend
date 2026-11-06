@@ -3,11 +3,13 @@ package org.kwakmunsu.auddum.admin.api;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.auddum.admin.api.dto.AdminReasonRequest;
 import org.kwakmunsu.auddum.admin.api.dto.AdminReportDetailResponse;
-import org.kwakmunsu.auddum.admin.api.dto.AdminReportListRequest;
 import org.kwakmunsu.auddum.admin.api.dto.AdminReportListResponse;
+import org.kwakmunsu.auddum.admin.api.dto.ReportCursor;
 import org.kwakmunsu.auddum.admin.application.AdminReportCommandService;
 import org.kwakmunsu.auddum.admin.application.AdminReportQueryService;
 import org.kwakmunsu.auddum.admin.application.dto.AdminReportSummary;
+import org.kwakmunsu.auddum.report.domain.ReportStatus;
+import org.kwakmunsu.auddum.support.paging.CursorPaging;
 import org.kwakmunsu.auddum.support.stereotype.WebApi;
 import org.kwakmunsu.auddum.support.web.CurrentMemberId;
 import org.springframework.data.domain.Slice;
@@ -32,16 +34,14 @@ public class AdminReportWebApi extends AdminReportWebApiDocs {
     @GetMapping
     public ResponseEntity<AdminReportListResponse> getReports(
         @CurrentMemberId Long adminId,
-        @RequestParam(required = false) String status,
+        @RequestParam(defaultValue = "PENDING") ReportStatus status,
         @RequestParam(required = false) String cursor,
         @RequestParam(required = false) Integer size
     ) {
-        AdminReportListRequest request = new AdminReportListRequest(status, cursor, size);
         Slice<AdminReportSummary> slice = adminReportQueryService.getReports(
             adminId,
-            request.reportStatus(),
-            request.cursorId(),
-            request.pageSize()
+            status,
+            CursorPaging.of(ReportCursor.idOf(cursor), size)
         );
 
         return ResponseEntity.ok(AdminReportListResponse.of(slice));

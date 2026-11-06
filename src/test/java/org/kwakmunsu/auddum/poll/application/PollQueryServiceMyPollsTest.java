@@ -14,7 +14,6 @@ import org.kwakmunsu.auddum.member.domain.MemberErrorCode;
 import org.kwakmunsu.auddum.member.domain.MemberFixture;
 import org.kwakmunsu.auddum.member.domain.MemberStatus;
 import org.kwakmunsu.auddum.member.infrastructure.MemberJpaRepository;
-import org.kwakmunsu.auddum.poll.application.dto.CursorPaging;
 import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
@@ -23,6 +22,7 @@ import org.kwakmunsu.auddum.poll.infrastructure.PollJpaRepository;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
 import org.kwakmunsu.auddum.support.error.AuddumException;
 import org.kwakmunsu.auddum.support.error.DefaultErrorCode;
+import org.kwakmunsu.auddum.support.paging.CursorPaging;
 import org.springframework.transaction.annotation.Transactional;
 
 /**

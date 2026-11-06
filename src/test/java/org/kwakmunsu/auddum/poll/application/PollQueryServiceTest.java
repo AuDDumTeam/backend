@@ -28,12 +28,13 @@ import org.kwakmunsu.auddum.poll.domain.PollStatus;
 import org.kwakmunsu.auddum.poll.infrastructure.PollJpaRepository;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
 import org.kwakmunsu.auddum.support.error.AuddumException;
+import org.kwakmunsu.auddum.support.paging.CursorPaging;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 투표 목록·상세 조회(PollQueryService, PollReader)의 통합 테스트(H2). 공개 범위, 최신순 커서 이어짐, 상세 선택지 순서와 404, 숨김·삭제 투표의 작성자·관리자 열람을 확인한다.
  * 가정한 이름: PollReader#getReadable(String publicId, Long viewerId)(비회원은 null). 관리자는 DB의 role로만 판단한다(토큰 role은 서비스에 넘기지 않는다).
- * 커서 인코딩과 size 보정은 api 계층 코드(PollListRequest, PollCursor)가 맡는다.
+ * 커서 인코딩과 size 보정은 컨트롤러(PollCursor)와 CursorPaging이 맡는다.
  */
 @RequiredArgsConstructor
 @Transactional
@@ -64,7 +65,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
 
     @Test
     void 투표가_없으면_참여_수_목록도_비어_있다() {
-        var slice = pollQueryService.getPollSummaries(null, null, 20);
+        var slice = pollQueryService.getPollSummaries(null, new CursorPaging(null, 20));
 
         assertThat(slice.getContent()).isEmpty();
         assertThat(slice.hasNext()).isFalse();
@@ -75,7 +76,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var first = savePoll("첫째");
         var second = savePoll("둘째");
 
-        var slice = pollQueryService.getPollSummaries(null, null, 20);
+        var slice = pollQueryService.getPollSummaries(null, new CursorPaging(null, 20));
 
         assertThat(slice.getContent()).extracting(summary -> summary.poll().getId(), PollSummary::participantCount)
             .containsExactly(tuple(second.getId(), 0L), tuple(first.getId(), 0L));
@@ -87,7 +88,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var second = savePoll("둘째");
         var third = savePoll("셋째");
 
-        var slice = pollQueryService.getPollSummaries(null, null, 2);
+        var slice = pollQueryService.getPollSummaries(null, new CursorPaging(null, 2));
 
         assertThat(slice.getContent()).extracting(summary -> summary.poll().getId())
             .containsExactly(third.getId(), second.getId());
@@ -220,7 +221,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var secondSome = savePoll("둘째 썸", Category.SOME);
         savePoll("이별", Category.BREAKUP);
 
-        var slice = pollQueryService.getPollSummaries(null, Category.SOME, 20);
+        var slice = pollQueryService.getPollSummaries(Category.SOME, new CursorPaging(null, 20));
 
         assertThat(slice.getContent()).extracting(summary -> summary.poll().getId())
             .containsExactly(secondSome.getId(), firstSome.getId());
@@ -233,7 +234,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
         var etc = savePoll("기타", Category.ETC);
         var breakup = savePoll("이별", Category.BREAKUP);
 
-        var slice = pollQueryService.getPollSummaries(null, null, 20);
+        var slice = pollQueryService.getPollSummaries(null, new CursorPaging(null, 20));
 
         assertThat(slice.getContent()).extracting(summary -> summary.poll().getId())
             .containsExactly(breakup.getId(), etc.getId(), some.getId());
@@ -287,7 +288,7 @@ class PollQueryServiceTest extends IntegrationTestSupport {
     void 맞는_투표가_없으면_빈_슬라이스다() {
         savePoll("기타", Category.ETC);
 
-        var slice = pollQueryService.getPollSummaries(null, Category.BREAKUP, 20);
+        var slice = pollQueryService.getPollSummaries(Category.BREAKUP, new CursorPaging(null, 20));
 
         assertThat(slice.getContent()).isEmpty();
         assertThat(slice.hasNext()).isFalse();

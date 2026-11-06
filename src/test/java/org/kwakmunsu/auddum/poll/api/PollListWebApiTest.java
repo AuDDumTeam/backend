@@ -2,7 +2,6 @@ package org.kwakmunsu.auddum.poll.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -20,6 +19,7 @@ import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.ClosesAt;
 import org.kwakmunsu.auddum.poll.domain.Poll;
+import org.kwakmunsu.auddum.support.paging.CursorPaging;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -43,7 +43,7 @@ class PollListWebApiTest extends WebApiTestSupport {
     @Test
     void 인증_없이_목록을_조회하면_200과_items_nextCursor를_내린다() {
         var poll = createPoll(CLOSES_AT);
-        given(pollQueryService.getPollSummaries(null, null, 20)).willReturn(slice(List.of(summary(poll, 42)), true));
+        given(pollQueryService.getPollSummaries(null, new CursorPaging(null, 20))).willReturn(slice(List.of(summary(poll, 42)), true));
 
         mvcTester.get()
             .uri("/api/v1/polls")
@@ -63,7 +63,7 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void 목록_항목은_내부_id를_노출하지_않는다() {
-        given(pollQueryService.getPollSummaries(null, null, 20))
+        given(pollQueryService.getPollSummaries(null, new CursorPaging(null, 20)))
             .willReturn(slice(List.of(summary(createPoll(CLOSES_AT), 0)), false));
 
         var body = readBody("/api/v1/polls");
@@ -76,7 +76,7 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void 마감_시각이_없는_투표는_closesAt이_null이고_closed가_false다() {
-        given(pollQueryService.getPollSummaries(null, null, 20)).willReturn(slice(List.of(summary(createPoll(null), 0)), false));
+        given(pollQueryService.getPollSummaries(null, new CursorPaging(null, 20))).willReturn(slice(List.of(summary(createPoll(null), 0)), false));
 
         var body = readBody("/api/v1/polls");
 
@@ -89,7 +89,7 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void 마감된_투표는_목록에서_closed가_true다() {
-        given(pollQueryService.getPollSummaries(null, null, 20))
+        given(pollQueryService.getPollSummaries(null, new CursorPaging(null, 20)))
             .willReturn(slice(List.of(summary(createClosedPoll(), 0)), false));
 
         mvcTester.get()
@@ -102,7 +102,7 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void 투표가_없으면_빈_items와_null_nextCursor로_200이다() {
-        given(pollQueryService.getPollSummaries(null, null, 20)).willReturn(slice(List.of(), false));
+        given(pollQueryService.getPollSummaries(null, new CursorPaging(null, 20))).willReturn(slice(List.of(), false));
 
         var body = readBody("/api/v1/polls");
 
@@ -113,14 +113,14 @@ class PollListWebApiTest extends WebApiTestSupport {
 
     @Test
     void cursor를_해석하고_size를_서비스에_넘긴다() {
-        given(pollQueryService.getPollSummaries(5L, null, 10)).willReturn(slice(List.of(), false));
+        given(pollQueryService.getPollSummaries(null, new CursorPaging(5L, 10))).willReturn(slice(List.of(), false));
 
         mvcTester.get()
             .uri("/api/v1/polls?cursor=eyJpZCI6NX0&size=10")
             .assertThat()
             .hasStatus(HttpStatus.OK);
 
-        verify(pollQueryService).getPollSummaries(5L, null, 10);
+        verify(pollQueryService).getPollSummaries(null, new CursorPaging(5L, 10));
     }
 
     // ---- category 필터 (#162) ----
@@ -136,7 +136,7 @@ class PollListWebApiTest extends WebApiTestSupport {
             .assertThat()
             .hasStatus(HttpStatus.OK);
 
-        verify(pollQueryService).getPollSummaries(isNull(), eq(category), eq(20));
+        verify(pollQueryService).getPollSummaries(eq(category), eq(new CursorPaging(null, 20)));
     }
 
     @Test
@@ -145,7 +145,7 @@ class PollListWebApiTest extends WebApiTestSupport {
 
         mvcTester.get().uri("/api/v1/polls").assertThat().hasStatus(HttpStatus.OK);
 
-        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
+        verify(pollQueryService).getPollSummaries(isNull(), eq(new CursorPaging(null, 20)));
     }
 
     @Test
@@ -154,7 +154,7 @@ class PollListWebApiTest extends WebApiTestSupport {
 
         mvcTester.get().uri("/api/v1/polls?category=").assertThat().hasStatus(HttpStatus.OK);
 
-        verify(pollQueryService).getPollSummaries(isNull(), isNull(), eq(20));
+        verify(pollQueryService).getPollSummaries(isNull(), eq(new CursorPaging(null, 20)));
     }
 
     @Test
@@ -163,13 +163,13 @@ class PollListWebApiTest extends WebApiTestSupport {
 
         mvcTester.get().uri("/api/v1/polls?category=BREAKUP&size=5").assertThat().hasStatus(HttpStatus.OK);
 
-        verify(pollQueryService).getPollSummaries(isNull(), eq(Category.BREAKUP), eq(5));
+        verify(pollQueryService).getPollSummaries(eq(Category.BREAKUP), eq(new CursorPaging(null, 5)));
     }
 
     // ---- 보조 ----
 
     private void stubEmptySlice() {
-        given(pollQueryService.getPollSummaries(any(), any(), anyInt())).willReturn(slice(List.of(), false));
+        given(pollQueryService.getPollSummaries(any(), any(CursorPaging.class))).willReturn(slice(List.of(), false));
     }
 
     private PollSummary summary(Poll poll, long participantCount) {

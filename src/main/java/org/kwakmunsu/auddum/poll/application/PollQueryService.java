@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.auddum.member.application.MemberValidator;
-import org.kwakmunsu.auddum.poll.application.dto.CursorPaging;
 import org.kwakmunsu.auddum.poll.application.dto.MyPollPage;
 import org.kwakmunsu.auddum.poll.application.dto.ParticipatedPoll;
 import org.kwakmunsu.auddum.poll.application.dto.Participation;
@@ -16,6 +15,7 @@ import org.kwakmunsu.auddum.poll.application.dto.VotedPollPage;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
+import org.kwakmunsu.auddum.support.paging.CursorPaging;
 import org.kwakmunsu.auddum.support.stereotype.QueryService;
 import org.springframework.data.domain.Slice;
 
@@ -50,8 +50,8 @@ public class PollQueryService {
      * 결과 공개 규칙과 무관하게 전체 참여 수는 항상 내려준다.
      * category가 null이면 모든 카테고리다.
      */
-    public Slice<PollSummary> getPollSummaries(Long cursorId, Category category, int size) {
-        Slice<Poll> polls = pollReader.findAllPublicOlderThan(cursorId, category, size);
+    public Slice<PollSummary> getPollSummaries(Category category, CursorPaging paging) {
+        Slice<Poll> polls = pollReader.findAllPublicOlderThan(paging.cursorId(), category, paging.size());
 
         List<Long> pollIds = polls.getContent()
             .stream()

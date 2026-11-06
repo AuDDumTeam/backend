@@ -164,12 +164,27 @@ class AdminReportChainTest extends DataIntegrationTestSupport {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"UNKNOWN", "pending", "ALL", ""})
+    @ValueSource(strings = {"UNKNOWN", "pending", "ALL"})
     void 허용되지_않는_status는_400_MALFORMED_REQUEST다(String status) {
         var result = get(LIST_URI + "?status=" + status, saveMember(Role.ADMIN));
 
         assertThat(result).hasStatus(400);
         assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("MALFORMED_REQUEST");
+    }
+
+    @Test
+    void status가_비어_있으면_생략과_같이_PENDING_신고만_조회한다() {
+        var poll = savePoll(newPoll(saveMember()));
+        var admin = saveMember(Role.ADMIN);
+        var pending = saveReport(poll);
+        saveReport(poll, ReportStatus.RESOLVED, admin);
+        saveReport(poll, ReportStatus.DISMISSED, admin);
+
+        var result = get(LIST_URI + "?status=", admin);
+
+        assertThat(result).hasStatus(200);
+        assertThat(longs(result, "$.items[*].id")).containsExactly(pending.getId());
+        assertThat(strings(result, "$.items[*].status")).containsExactly("PENDING");
     }
 
     // ---- 목록: 항목 필드 ----
