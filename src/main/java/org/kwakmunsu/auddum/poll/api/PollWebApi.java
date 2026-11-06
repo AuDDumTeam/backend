@@ -10,6 +10,8 @@ import org.kwakmunsu.auddum.poll.api.dto.PollDetailResponse;
 import org.kwakmunsu.auddum.poll.api.dto.PollCursor;
 import org.kwakmunsu.auddum.poll.api.dto.PollListRequest;
 import org.kwakmunsu.auddum.poll.api.dto.PollListResponse;
+import org.kwakmunsu.auddum.poll.api.dto.VoteCursor;
+import org.kwakmunsu.auddum.poll.api.dto.VotedPollListResponse;
 import org.kwakmunsu.auddum.poll.application.PollCommandService;
 import org.kwakmunsu.auddum.poll.application.PollQueryService;
 import org.kwakmunsu.auddum.poll.application.dto.CursorPaging;
@@ -17,6 +19,7 @@ import org.kwakmunsu.auddum.poll.application.dto.MyPollPage;
 import org.kwakmunsu.auddum.poll.application.dto.PollDetail;
 import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
 import org.kwakmunsu.auddum.poll.application.dto.Viewer;
+import org.kwakmunsu.auddum.poll.application.dto.VotedPollPage;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.support.config.TimeConfig;
@@ -78,6 +81,18 @@ public class PollWebApi extends PollWebApiDocs {
         MyPollPage page = pollQueryService.getMyPolls(memberId, CursorPaging.of(PollCursor.idOf(cursor), size));
 
         return ResponseEntity.ok(MyPollListResponse.of(page, LocalDateTime.now(TimeConfig.KST)));
+    }
+
+    @Override
+    @GetMapping("/voted")
+    public ResponseEntity<VotedPollListResponse> getVotedPolls(
+        @CurrentMemberId Long memberId,
+        @RequestParam(required = false) String cursor,
+        @RequestParam(required = false) Integer size
+    ) {
+        VotedPollPage page = pollQueryService.getVotedPolls(memberId, CursorPaging.of(VoteCursor.idOf(cursor), size));
+
+        return ResponseEntity.ok(VotedPollListResponse.of(page, LocalDateTime.now(TimeConfig.KST)));
     }
 
     @Override

@@ -8,7 +8,6 @@ import lombok.Builder;
 import org.kwakmunsu.auddum.poll.application.dto.PollSummary;
 import org.kwakmunsu.auddum.poll.domain.Category;
 import org.kwakmunsu.auddum.poll.domain.Poll;
-import org.kwakmunsu.auddum.support.config.TimeConfig;
 
 /**
  * 목록의 투표 한 건. 내부 id는 담지 않고 공개 ID만 내린다.
@@ -44,8 +43,8 @@ public record PollSummaryResponse(
             .category(poll.getCategory())
             .participantCount(summary.participantCount())
             .closed(poll.isClosed(now))
-            .closesAt(TimeConfig.toKstOffset(poll.getClosesAt() == null ? null : poll.getClosesAt().value()))
-            .createdAt(TimeConfig.toKstOffset(poll.getCreatedAt()))
+            .closesAt(PollTimes.closesAtOf(poll))
+            .createdAt(PollTimes.createdAtOf(poll))
             .build();
     }
 

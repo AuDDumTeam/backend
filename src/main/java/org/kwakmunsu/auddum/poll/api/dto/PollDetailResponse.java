@@ -55,7 +55,7 @@ public record PollDetailResponse(
             .category(poll.getCategory())
             .status(poll.getStatus())
             .options(options)
-            .closesAt(TimeConfig.toKstOffset(poll.getClosesAt() == null ? null : poll.getClosesAt().value()))
+            .closesAt(PollTimes.closesAtOf(poll))
             .closed(detail.closed())
             .participantCount(detail.participantCount())
             .myChoice(detail.myChoice())
