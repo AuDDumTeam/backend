@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.kwakmunsu.auddum.admin.api.dto.AdminReasonRequest;
 import org.kwakmunsu.auddum.admin.api.dto.AdminReportDetailResponse;
 import org.kwakmunsu.auddum.admin.api.dto.AdminReportListResponse;
+import org.kwakmunsu.auddum.report.domain.ReportStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -22,12 +23,12 @@ public abstract class AdminReportWebApiDocs {
             + "cursor는 이전 응답의 nextCursor를 그대로 넘기는 불투명한 값이다."
     )
     @ApiResponse(responseCode = "200", description = "목록. 신고가 없으면 빈 items")
-    @ApiResponse(responseCode = "400", description = "MALFORMED_REQUEST: status가 PENDING·RESOLVED·DISMISSED가 아님, cursor 형식 오류, size가 숫자가 아님")
+    @ApiResponse(responseCode = "400", description = "MALFORMED_REQUEST: status가 PENDING·RESOLVED·DISMISSED가 아님(빈 값은 PENDING), cursor 형식 오류, size가 숫자가 아님")
     @ApiResponse(responseCode = "401", description = "UNAUTHENTICATED")
     @ApiResponse(responseCode = "403", description = "FORBIDDEN: 관리자가 아님(정지·탈퇴한 관리자 포함)")
     public abstract ResponseEntity<AdminReportListResponse> getReports(
         @Parameter(hidden = true) Long adminId,
-        @Parameter(description = "신고 상태. 기본 PENDING", example = "PENDING") String status,
+        @Parameter(description = "신고 상태. 생략하거나 비우면 PENDING", example = "PENDING") ReportStatus status,
         @Parameter(description = "이전 응답의 nextCursor. 없으면 첫 페이지") String cursor,
         @Parameter(description = "한 페이지 개수. 기본 20, 1보다 작으면 1, 50을 넘으면 50으로 보정") Integer size
     );

@@ -1,4 +1,4 @@
-package org.kwakmunsu.auddum.poll.application.dto;
+package org.kwakmunsu.auddum.support.paging;
 
 /**
  * 커서 페이징 조건. 쪽 크기가 없으면 기본값, 범위를 벗어나면 1~50으로 보정한다.
@@ -20,7 +20,7 @@ public record CursorPaging(
     }
 
     /** 쪽 크기를 보정한다. 없으면 기본 20, 1보다 작으면 1, 50을 넘으면 50이다. */
-    public static int clampSize(Integer size) {
+    private static int clampSize(Integer size) {
         return size == null ? DEFAULT_SIZE : Math.clamp(size, MIN_SIZE, MAX_SIZE);
     }
 

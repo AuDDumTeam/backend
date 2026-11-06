@@ -23,7 +23,11 @@ public record PollListResponse(
             .toList();
 
         // 다음 페이지 커서를 계산한다. 마지막 페이지면 null이다.
-        String nextCursor = slice.hasNext() ? PollListRequest.nextCursor(slice.getContent().getLast().poll().getId()) : null;
+        String nextCursor = null;
+        if (slice.hasNext()) {
+            Long lastId = slice.getContent().getLast().poll().getId();
+            nextCursor = new PollCursor(lastId).encode();
+        }
 
         return PollListResponse.builder()
             .items(items)

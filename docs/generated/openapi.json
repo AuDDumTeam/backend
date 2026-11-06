@@ -702,12 +702,14 @@
         "description" : "상태별(기본 PENDING) 신고를 접수 순(id 오름차순)으로 내린다. 각 항목에 같은 투표에 쌓인 신고 수(pollReportCount)가 있다. cursor는 이전 응답의 nextCursor를 그대로 넘기는 불투명한 값이다.",
         "operationId" : "getReports",
         "parameters" : [ {
-          "description" : "신고 상태. 기본 PENDING",
+          "description" : "신고 상태. 생략하거나 비우면 PENDING",
           "example" : "PENDING",
           "in" : "query",
           "name" : "status",
           "required" : false,
           "schema" : {
+            "default" : "PENDING",
+            "enum" : [ "PENDING", "RESOLVED", "DISMISSED" ],
             "type" : "string"
           }
         }, {
@@ -747,7 +749,7 @@
                 }
               }
             },
-            "description" : "MALFORMED_REQUEST: status가 PENDING·RESOLVED·DISMISSED가 아님, cursor 형식 오류, size가 숫자가 아님"
+            "description" : "MALFORMED_REQUEST: status가 PENDING·RESOLVED·DISMISSED가 아님(빈 값은 PENDING), cursor 형식 오류, size가 숫자가 아님"
           },
           "401" : {
             "content" : {

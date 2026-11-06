@@ -12,6 +12,7 @@ import org.kwakmunsu.auddum.poll.domain.Poll;
 import org.kwakmunsu.auddum.report.application.ReportReader;
 import org.kwakmunsu.auddum.report.domain.Report;
 import org.kwakmunsu.auddum.report.domain.ReportStatus;
+import org.kwakmunsu.auddum.support.paging.CursorPaging;
 import org.kwakmunsu.auddum.support.stereotype.QueryService;
 import org.springframework.data.domain.Slice;
 
@@ -26,10 +27,10 @@ public class AdminReportQueryService {
     private final AdminActionReader adminActionReader;
 
     /** 같은 상태의 신고를 접수 순으로 한 페이지 돌려준다. 대상 투표와 투표별 신고 수는 페이지 단위로 한 번에 읽는다. */
-    public Slice<AdminReportSummary> getReports(Long adminId, ReportStatus status, Long cursorId, int size) {
+    public Slice<AdminReportSummary> getReports(Long adminId, ReportStatus status, CursorPaging paging) {
         adminAccessValidator.validateAdmin(adminId);
 
-        Slice<Report> reports = reportReader.findAllByStatusAfter(status, cursorId, size);
+        Slice<Report> reports = reportReader.findAllByStatusAfter(status, paging.cursorId(), paging.size());
 
         List<Long> pollIds = reports.getContent().stream()
             .map(Report::getPollId)
